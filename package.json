@@ -1,0 +1,19 @@
+{
+  "name": "studio-prepa",
+  "version": "1.0.0",
+  "description": "Préparation de tournage en local : canvas, scénario, dépouillement, liste artistique, plan de travail, feuilles de service, moodboard IA.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dejavu-fonts-ttf": "^2.37.3",
+    "express": "^4.21.2",
+    "pdfkit": "^0.20.2",
+    "qrcode": "^1.5.4"
+  }
+}
