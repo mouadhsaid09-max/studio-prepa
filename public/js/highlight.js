@@ -7,10 +7,13 @@ const rx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // termes : Map(minuscule → catégorie)
 export function termsOf(P, project) {
-  const T = new Map(), add = (n, c) => { n = String(n || '').trim().toLowerCase(); if (n.length > 1 && !T.has(n)) T.set(n, c); };
-  P.roles.forEach(r => { add(r.name, 'ch'); r.name.split(/\s+/).filter(w => w.length > 2).forEach(w => add(w, 'ch')); });
+  const ign = new Set((project.ignore || []).map(x => String(x).toLowerCase()));
+  const T = new Map(), add = (n, c, force) => { n = String(n || '').trim().toLowerCase(); if (n.length > 1 && !ign.has(n) && (force || !T.has(n))) T.set(n, c); };
+  // Mots génériques d'un nom de rôle (« VOIX OFF », « JEUNE FILLE ») : seulement le nom complet est surligné
+  const GEN = new Set(['voix', 'off', 'homme', 'femme', 'jeune', 'fille', 'garçon', 'vieux', 'vieille', 'enfant', 'mère', 'père', 'le', 'la', 'les', 'des', 'man', 'woman', 'young', 'old', 'girl', 'boy', 'voice', 'over', 'the']);
+  P.roles.forEach(r => { add(r.name, 'ch'); const w = r.name.split(/\s+/); if (w.length > 1) w.filter(x => x.length > 2 && !GEN.has(x.toLowerCase())).forEach(x => add(x, 'ch')); });
   P.scenes.forEach(s => { HL.forEach(([c]) => { if (s.det && s.det[c]) s.det[c].split(/\s*,\s*/).forEach(n => add(n, c)); }); (s.places || []).forEach(n => add(n, 'pl')); });
-  Object.entries(project.tags || {}).forEach(([n, c]) => add(n, c));
+  Object.entries(project.tags || {}).forEach(([n, c]) => add(n, c, true)); // le choix de l'utilisateur l'emporte
   return T;
 }
 
@@ -52,6 +55,8 @@ export function attachHighlight(tx, getTerms) {
   new ResizeObserver(() => { fit(); paint(); }).observe(tx);
   fit(); paint();
   return {
+    // Élément surligné sous le curseur : { start, end, text, cat } ou null
+    termAt(pos) { if (!re) build(); re.lastIndex = 0; let m; while ((m = re.exec(tx.value))) { if (m.index <= pos && pos <= m.index + m[0].length) { const c = m[1] ? (map.get(m[1].replace(/^@\[?|\]$/g, '').replace(/_/g, ' ').toLowerCase()) || 'mnt') : map.get(m[0].toLowerCase()); return { start: m.index, end: m.index + m[0].length, text: m[0], cat: c || 'acc' }; } if (m.index > pos) break; } return null; },
     refresh() { re = null; paint(); },
     toggle(v) { on = v; wrap.classList.toggle('off', !on); paint(); },
     get on() { return on; }

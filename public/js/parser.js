@@ -71,7 +71,7 @@ export const DICT = {
         'suitcase', 'bag', 'handbag', 'purse', 'backpack', 'letter', 'envelope', 'parcel', 'phone', 'mobile', 'key', 'keys', 'knife', 'scissors', 'glass', 'glasses', 'cup', 'mug', 'plate', 'tray', 'bottle', 'jug', 'cigarette', 'cigar', 'lighter', 'matches', 'ashtray', 'book', 'notebook', 'newspaper', 'magazine', 'photo', 'photograph', 'frame', 'ticket', 'pen', 'pencil', 'brush', 'paintbrush', 'canvas', 'easel', 'laptop', 'computer', 'tablet', 'camera', 'microphone', 'headphones', 'watch', 'clock', 'ring', 'necklace', 'bracelet', 'earrings', 'sunglasses', 'umbrella', 'mirror', 'tissue', 'tissues', 'towel', 'wallet', 'money', 'coin', 'card', 'passport', 'candle', 'lamp', 'torch', 'flashlight', 'rope', 'hammer', 'pistol', 'flowers', 'bouquet', 'gift', 'present', 'cake', 'bread', 'guitar', 'violin', 'ball', 'toy', 'doll', 'pills', 'syringe', 'perfume', 'lipstick', 'mini bar', 'minibar', 'wine', 'champagne'],
   cos: ['robe', 'robe de soirée', 'costume', 'tailleur', 'chemise', 'chemisier', 't-shirt', 'pull', 'gilet', 'veste', 'blouson', 'manteau', 'imperméable', 'trench', 'jupe', 'pantalon', 'jean', 'short', 'uniforme', 'blouse', 'tablier', 'pyjama', 'peignoir', 'maillot', 'cravate', 'nœud papillon', 'écharpe', 'foulard', 'voile', 'hijab', 'chapeau', 'casquette', 'chéchia', 'jebba', 'burnous', 'kachabia', 'djellaba', 'gants', 'chaussures', 'baskets', 'talons', 'bottes', 'sandales', 'pieds nus', 'tenue', 'déguisement',
         'dress', 'party dress', 'gown', 'suit', 'tuxedo', 'shirt', 'blouse', 't-shirt', 'sweater', 'jumper', 'jacket', 'coat', 'raincoat', 'skirt', 'trousers', 'pants', 'jeans', 'shorts', 'uniform', 'apron', 'pyjamas', 'bathrobe', 'tie', 'bow tie', 'scarf', 'headscarf', 'hat', 'cap', 'gloves', 'shoes', 'trainers', 'sneakers', 'heels', 'boots', 'sandals', 'barefoot', 'outfit', 'costume'],
-  hmc: ['maquillage', 'maquillée', 'maquillé', 'démaquillé', 'rouge à lèvres', 'mascara', 'fond de teint', 'perruque', 'moustache', 'barbe', 'chignon', 'tresse', 'tresses', 'coiffure', 'coiffée', 'cheveux mouillés', 'cicatrice', 'ecchymose', 'bleu', 'hématome', 'plaie', 'sueur', 'larmes', 'tatouage', 'henné', 'khôl', 'vieilli',
+  hmc: ['maquillage', 'maquillée', 'maquillé', 'démaquillé', 'rouge à lèvres', 'mascara', 'fond de teint', 'perruque', 'moustache', 'barbe', 'chignon', 'tresse', 'tresses', 'coiffure', 'coiffée', 'cheveux mouillés', 'cicatrice', 'ecchymose', 'hématome', 'plaie', 'sueur', 'larmes', 'tatouage', 'henné', 'khôl', 'vieilli',
         'make up', 'makeup', 'make-up', 'lipstick', 'mascara', 'foundation', 'wig', 'moustache', 'beard', 'bun', 'braid', 'braids', 'hair done', 'hairdo', 'wet hair', 'scar', 'bruise', 'wound', 'sweat', 'tears', 'tattoo', 'henna', 'kohl'],
   veh: ['voiture', 'taxi', 'louage', 'moto', 'scooter', 'mobylette', 'autobus', 'bus', 'camion', 'camionnette', 'vélo', 'train', 'tramway', 'métro', 'ambulance', 'voiture de police', 'bateau', 'barque', 'avion', 'hélicoptère', 'charrette', 'ascenseur', 'car', 'cab', 'truck', 'motorcycle', 'motorbike', 'bike', 'bicycle', 'boat', 'van', 'plane', 'helicopter', 'lift', 'elevator', 'police car'],
   ani: ['chien', 'chiens', 'chiot', 'chat', 'chats', 'chaton', 'cheval', 'chevaux', 'âne', 'chèvre', 'mouton', 'moutons', 'vache', 'poule', 'poules', 'coq', 'oiseau', 'oiseaux', 'pigeon', 'pigeons', 'mouette', 'chameau', 'dromadaire', 'poisson', 'poissons', 'abeille', 'abeilles', 'serpent', 'tortue', 'lapin', 'souris', 'rat', 'dog', 'dogs', 'puppy', 'cat', 'cats', 'kitten', 'horse', 'donkey', 'goat', 'sheep', 'cow', 'chicken', 'bird', 'birds', 'pigeon', 'seagull', 'camel', 'fish', 'bee', 'bees', 'snake', 'rabbit', 'mouse'],
@@ -316,10 +316,18 @@ export function mentionCat(P, tags, name) {
   for (const c of Object.keys(DICT)) if (DICT[c].includes(k)) return c;
   return null;
 }
-function applyMentions(P, tags) {
-  const un = new Set();
+function applyMentions(P, tags, ignore = []) {
+  const un = new Set(), ign = new Set(ignore.map(x => String(x).toLowerCase()));
+  // Mots classés en les sélectionnant dans le texte : on les retrouve dans chaque scène, comme une mention « @ »
+  const tagRx = Object.keys(tags).filter(n => n.length > 1).map(n => [n, new RegExp('(^|[^\\p{L}\\p{N}])' + rx(n) + '(?![\\p{L}\\p{N}])', 'iu')]);
   P.scenes.forEach(s => {
     s.places = [];
+    const txt = s.action.join(' ').replace(/[’]/g, "'");
+    s.mentions = s.mentions || [];
+    tagRx.forEach(([n, re]) => { if (re.test(txt) && !s.mentions.some(m => m.toLowerCase() === n)) s.mentions.push(n); });
+    // Mots retirés : plus détectés ni surlignés
+    if (ign.size) Object.keys(s.det).forEach(c => { s.det[c] = (s.det[c] || '').split(/\s*,\s*/).filter(x => x && !ign.has(x.toLowerCase())).join(', '); });
+    s.mentions = s.mentions.filter(n => !ign.has(n.toLowerCase()));
     (s.mentions || []).forEach(n => {
       const c = mentionCat(P, tags, n) || (un.add(n), 'acc');
       if (c === 'ch') {
@@ -345,7 +353,7 @@ export function analyse(project) {
     if (o('summary') != null) s.summary = o('summary');
     s.ovr = ['decor', 'ie', 'time', 'summary'].some(f => o(f) != null && o(f) !== '') || parseInt(edits['est.' + s.k]) > 0;
   });
-  applyMentions(P, project.tags || {});
+  applyMentions(P, project.tags || {}, project.ignore || []);
   // Éléments trouvés par l'IA (dépouillement « Compléter avec l'IA ») : project.found[clé de scène][catégorie] = [noms]
   Object.entries(project.found || {}).forEach(([k, f]) => { const sc = P.scenes.find(x => x.k === k); if (!sc) return; Object.entries(f).forEach(([c, list]) => { if (!(c in sc.det)) return; const cur = (sc.det[c] || '').split(/\s*,\s*/).filter(Boolean); (list || []).forEach(n => { n = String(n).toLowerCase().trim(); if (n && !cur.some(x => x.includes(n) || n.includes(x))) cur.push(n); }); sc.det[c] = cur.join(', '); }); });
   P.roles.forEach(r => { const c = edits['cat.' + r.name]; if (c) r.cat = c; });

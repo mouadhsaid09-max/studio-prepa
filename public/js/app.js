@@ -14,7 +14,7 @@ import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
 import { startI18n, LANG, LANGS, LOCALES, setLang, tr } from './i18n.js';
 import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey, offDays } from './parser.js';
-import { attachMentions, projectItems } from './mentions.js';
+import { attachMentions, projectItems, caretXY } from './mentions.js';
 import { attachHighlight, termsOf, HL } from './highlight.js';
 import { renderBrief, bindBrief } from './commercial.js';
 setDateLocale(LOCALES[LANG]);
@@ -549,7 +549,7 @@ function scheduleSave() { dirty = true; setStatus('Modifié…'); clearTimeout(s
 async function flush() {
   clearTimeout(saveT); if (!dirty || !S.project) return; dirty = false;
   const p = S.project; setStatus('Enregistrement…');
-  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, brief: p.brief || null, format: p.format || undefined } }); setStatus('Enregistré'); }
+  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, ignore: p.ignore || null, brief: p.brief || null, format: p.format || undefined } }); setStatus('Enregistré'); }
   catch (e) { dirty = true; setStatus('Non enregistré'); toast('Enregistrement impossible : ' + esc(e.message)); }
 }
 window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, tags: p.tags || null, format: p.format || undefined }) }); } });
@@ -560,14 +560,16 @@ const mentionItems = () => projectItems(S.P, bibleOf(S.project, S.P), S.project.
 function mentionCreate(name, cat) {
   const p = S.project; (p.tags ||= {})[name.toLowerCase()] = cat;
   const kind = cat === 'ch' ? 'ch' : cat === 'pl' ? 'pl' : 'ob', B = bibleOf(p, S.P);
-  if (!B[kind].some(x => x.name.toLowerCase() === name.toLowerCase())) {
+  const ex = (p.bible?.objects || []).find(c => (p.edits?.[bibKey('ob:c:' + c.id, 'name')] || '').toLowerCase() === name.toLowerCase());
+  if (kind === 'ob' && ex) p.edits[bibKey('ob:c:' + ex.id, 'cat')] = (MENTION_CATS.find(x => x[0] === cat) || [, 'Accessoire'])[1];
+  else if (!B[kind].some(x => x.name.toLowerCase() === name.toLowerCase())) {
     const b = p.bible ||= {}, id = Math.random().toString(36).slice(2, 9), key = kind + ':c:' + id;
     (b[{ ch: 'chars', pl: 'places', ob: 'objects' }[kind]] ||= []).push({ id });
     p.edits ||= {}; p.edits[bibKey(key, 'name')] = kind === 'ch' ? name.toUpperCase() : name.charAt(0).toUpperCase() + name.slice(1);
     if (kind === 'ob') p.edits[bibKey(key, 'cat')] = (MENTION_CATS.find(x => x[0] === cat) || [, 'Accessoire'])[1];
   }
   scheduleSave(); reanalyse(false);
-  toast(`« ${esc(name)} » ${tr('ajouté à la Bible')}`);
+  toast(`« ${esc(name)} » ${tr('ajouté à la Bible')} · ${tr((MENTION_CATS.find(x => x[0] === cat) || [, ''])[1])}`);
 }
 // « @ » partout dans le projet : tout champ texte (sauf le titre et les champs chiffrés)
 const slugTok = n => '@' + n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
@@ -935,8 +937,8 @@ function renderScript(body) {
     <section class="sed">
       <div class="row between"><div class="note" id="sstat"></div>
         <div class="row"><button class="btn sm ghost hltog" id="hltog" aria-pressed="true">${tr('Surligner')}</button><label class="btn sm ghost">Importer${series ? ' dans cet épisode' : ''}…<input type="file" id="sfile" accept=".pdf,.docx,.fdx,.fountain,.txt" hidden></label></div></div>
-      <div class="hlleg" id="hlleg">${HL.map(([c, l]) => `<span class="hl-${c}">${tr(l)}</span>`).join('')}</div>
-      <textarea id="stxt" spellcheck="false" placeholder="${clip ? 'Collez ou écrivez les paroles ici.&#10;&#10;[Intro 0:00] EXT. TOIT - NUIT&#10;(Ce que l’on voit)&#10;Avec : Artiste&#10;&#10;[Couplet 1 0:15] INT. STUDIO - JOUR&#10;Paroles…&#10;&#10;[Refrain 0:45]&#10;Paroles…' : 'Collez ou écrivez le scénario' + (series ? ' de cet épisode' : '') + ' ici.&#10;&#10;1. INT. CUISINE - JOUR&#10;&#10;Action…&#10;&#10;PERSONNAGE&#10;Dialogue…'}" dir="auto">${esc(text)}</textarea>
+      <div class="hlleg" id="hlleg" title="${tr('Sélectionnez un mot dans le texte, puis choisissez sa catégorie')}">${HL.map(([c, l]) => `<button type="button" class="hl-${c}" data-hlcat="${c}">${tr(l)}</button>`).join('')}</div>
+      <textarea id="stxt" data-nomention spellcheck="false" placeholder="${clip ? 'Collez ou écrivez les paroles ici.&#10;&#10;[Intro 0:00] EXT. TOIT - NUIT&#10;(Ce que l’on voit)&#10;Avec : Artiste&#10;&#10;[Couplet 1 0:15] INT. STUDIO - JOUR&#10;Paroles…&#10;&#10;[Refrain 0:45]&#10;Paroles…' : 'Collez ou écrivez le scénario' + (series ? ' de cet épisode' : '') + ' ici.&#10;&#10;1. INT. CUISINE - JOUR&#10;&#10;Action…&#10;&#10;PERSONNAGE&#10;Dialogue…'}" dir="auto">${esc(text)}</textarea>
     </section></div>`;
   const tx = $('#stxt'); let t = null;
   const setText = v => { if (series) ep.script = v; else p.script = v; };
@@ -944,25 +946,70 @@ function renderScript(body) {
     const P = S.P, mine = series ? P.scenes.filter(sc => sc.epId === ep.id) : P.scenes;
     $('#sstat').innerHTML = `${series ? `<b>${esc(ep.name)}</b> : ${mine.length} scènes · Série : ` : ''}${P.scenes.length} ${clip ? 'sections' : 'scènes'} · ${P.roles.length} rôles · ${P.days.length} jours — <b class="ok">synchronisé</b>${P.warns.length ? ` · <span class="warn" title="${esc(P.warns.join('\n'))}">${P.warns.length} remarque${P.warns.length > 1 ? 's' : ''}</span>` : ''}`;
     const un = P.untagged || [], nt = Object.keys(p.tags || {}).length;
-    $('#smnt').innerHTML = `<h2>@ ${tr('Éléments')}</h2><p class="note sm">${tr('Tapez @ dans le texte pour appeler un personnage, un lieu ou un objet. Pour plusieurs mots : @[vieille radio].')}</p>`
+    const ignl = p.ignore || [];
+    $('#smnt').innerHTML = `<h2>${tr('Éléments')}</h2><p class="note sm">${tr('Sélectionnez un mot ou un groupe de mots dans le texte, puis choisissez sa catégorie : il est surligné et ajouté à la Bible. Touchez un mot surligné pour changer sa catégorie ou le retirer.')}</p>`
       + (un.length ? `<p class="mnt-warn">${tr('À classer')} :</p>${un.map(n => `<label class="mnt-row"><b data-nt>@${esc(n)}</b><select data-mtag="${esc(n)}"><option value="">${tr('Catégorie…')}</option>${MENTION_CATS.map(([c, l]) => `<option value="${c}">${tr(l)}</option>`).join('')}</select></label>`).join('')}` : '')
-      + (nt ? `<details class="mnt-list"><summary>${nt} ${tr('élément(s) classé(s)')}</summary>${Object.entries(p.tags).map(([n, c]) => `<label class="mnt-row"><b data-nt>@${esc(n)}</b><select data-mtag="${esc(n)}">${MENTION_CATS.map(([k, l]) => `<option value="${k}" ${k === c ? 'selected' : ''}>${tr(l)}</option>`).join('')}<option value="-">${tr('Retirer')}</option></select></label>`).join('')}</details>` : '');
+      + (ignl.length ? `<details class="mnt-list"><summary>${ignl.length} ${tr('mot(s) retiré(s)')}</summary>${ignl.map(n => `<div class="mnt-row"><b data-nt>${esc(n)}</b><button class="link" data-unign="${esc(n)}">${tr('Rétablir')}</button></div>`).join('')}</details>` : '')
+      + (nt ? `<details class="mnt-list"><summary>${nt} ${tr('élément(s) classé(s)')}</summary>${Object.entries(p.tags).map(([n, c]) => `<label class="mnt-row"><b data-nt>${esc(n)}</b><select data-mtag="${esc(n)}">${MENTION_CATS.map(([k, l]) => `<option value="${k}" ${k === c ? 'selected' : ''}>${tr(l)}</option>`).join('')}<option value="-">${tr('Retirer')}</option></select></label>`).join('')}</details>` : '');
     if (series) document.querySelectorAll('.eprow').forEach(r => { const n = P.scenes.filter(sc => sc.epId === r.dataset.ep).length; const sm = r.querySelector('small'); if (sm) sm.textContent = n + ' sc.'; });
     $('#slist').innerHTML = mine.length ? mine.map(sc => `<button class="sitem" data-line="${sc.line}" data-k="${esc(sc.k)}"><i class="sw ${cls(sc)}"></i><b>${esc(sc.sec ? sc.num : sc.num)}</b><span>${sc.sec ? `<em class="secl">${esc(sc.sec)}${sc.tc ? ' · ' + esc(sc.tc) : ''}</em> ` : ''}${esc(sc.decor)}</span><small>J${sc.day}</small></button>`).join('') : '<p class="note">Aucune scène détectée. Format attendu : « 1. INT. CUISINE - JOUR ».</p>';
   };
   refreshSide();
   // « @ » : appeler un personnage, un lieu ou un objet ; un nouveau nom reçoit la catégorie choisie
-  attachMentions(tx, { items: mentionItems, create: mentionCreate });
   // Surlignage des éléments (rôles, accessoires, costumes…) : réglage gardé dans le navigateur
   const hl = attachHighlight(tx, () => termsOf(S.P, p));
   const hlOn = (() => { try { return localStorage.getItem('goset.hl') !== '0'; } catch (e) { return true; } })();
   const setHl = v => { hl.toggle(v); $('#hltog').setAttribute('aria-pressed', v); $('#hlleg').classList.toggle('hidden', !v); try { localStorage.setItem('goset.hl', v ? '1' : '0'); } catch (e) { /* rien */ } };
   setHl(hlOn); $('#hltog').onclick = () => setHl(!hl.on);
+  // ---------- Classer en sélectionnant : la sélection reçoit une catégorie (couleur + Bible), ou un mot surligné est retiré ----------
+  let selT = null, lastSel = null;
+  const CATN = Object.fromEntries(HL), cleanSel = t => { let x = t.replace(/[\s.,;:!?«»"()\[\]…]+$/g, '').replace(/^[\s.,;:!?«»"()\[\]…]+/g, '').replace(/[’]/g, "'"); const w = x.split(/\s+/); if (w.length > 1 && /^(le|la|les|l'|un|une|des|du|de|d'|the|a|an|son|sa|ses)$/i.test(w[0])) x = w.slice(1).join(' '); return x.replace(/^(l'|d')/i, '').trim(); };
+  const hideSel = () => { selT?.remove(); selT = null; };
+  const showSel = () => {
+    hideSel(); if (!hl.on) return;
+    const a = tx.selectionStart, b = tx.selectionEnd;
+    let it;
+    if (b > a) { const raw = tx.value.slice(a, b); if (raw.includes('\n') || raw.trim().length < 2 || raw.length > 60) return; const name = cleanSel(raw); const t = hl.termAt(a); it = { name, cur: t && t.start <= a && t.end >= b && cleanSel(t.text).toLowerCase() === name.toLowerCase() ? t.cat : null, pos: b }; }
+    else { const t = hl.termAt(a); if (!t || t.cat === 'mnt') return; it = { name: cleanSel(t.text), cur: t.cat, pos: t.end }; }
+    if (!it.name) return;
+    lastSel = it;
+    selT = document.createElement('div'); selT.className = 'seltool'; selT.setAttribute('role', 'toolbar');
+    selT.innerHTML = `<span class="st-n" data-nt>${esc(it.name)}</span>${HL.map(([c, l]) => `<button type="button" class="hl-${c} ${it.cur === c ? 'on' : ''}" data-selcat="${c}">${tr(l)}</button>`).join('')}${it.cur ? `<button type="button" class="st-x" data-selx>✕ ${tr('Retirer')}</button>` : ''}`;
+    document.body.appendChild(selT);
+    const pt = caretXY(tx, it.pos); selT.style.left = Math.max(8, Math.min(pt.x - 40, innerWidth - selT.offsetWidth - 8)) + 'px'; selT.style.top = (pt.y + 6 + selT.offsetHeight > innerHeight ? pt.y - selT.offsetHeight - 26 : pt.y + 6) + 'px';
+    selT.addEventListener('mousedown', e => e.preventDefault());
+    selT.addEventListener('click', e => { const bt = e.target.closest('button'); if (!bt) return; bt.dataset.selcat ? applyCat(it.name, bt.dataset.selcat) : unTag(it.name); hideSel(); });
+  };
+  const applyCat = (name, cat) => {
+    const k = name.toLowerCase(); p.ignore = (p.ignore || []).filter(x => x !== k);
+    mentionCreate(name, cat); refreshSide(); hl.refresh();
+  };
+  const unTag = name => {
+    const k = name.toLowerCase(); p.tags ||= {};
+    delete p.tags[k];
+    if (!(p.ignore ||= []).includes(k)) p.ignore.push(k);
+    // fiche de Bible créée seulement pour ce mot (nom et catégorie, rien d'autre) : retirée aussi
+    const b = p.bible || {}, ed = p.edits || {};
+    [['chars', 'ch'], ['places', 'pl'], ['objects', 'ob']].forEach(([lk, kind]) => { b[lk] = (b[lk] || []).filter(c => { const key = kind + ':c:' + c.id, nm = (ed[bibKey(key, 'name')] || '').toLowerCase(); const own = Object.keys(ed).filter(x => x.startsWith('bib.' + key + '.')); if (nm === k && own.every(x => /\.(name|cat)$/.test(x))) { own.forEach(x => delete ed[x]); return false; } return true; }); });
+    scheduleSave(); reanalyse(false); refreshSide(); hl.refresh();
+    toast(`« ${esc(name)} » ${tr('n’est plus surligné')}`);
+  };
+  let selTimer = null;
+  const later = () => { clearTimeout(selTimer); selTimer = setTimeout(showSel, 60); };
+  tx.addEventListener('mouseup', later); tx.addEventListener('touchend', later);
+  tx.addEventListener('keyup', e => { if (e.shiftKey || /Arrow|Home|End/.test(e.key)) later(); else hideSel(); });
+  tx.addEventListener('scroll', hideSel); tx.addEventListener('input', hideSel);
+  tx.addEventListener('blur', () => setTimeout(() => { if (!selT?.matches(':hover')) hideSel(); }, 150));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideSel(); });
+  // Les pastilles de la légende classent aussi la dernière sélection
+  $('#hlleg').addEventListener('mousedown', e => e.preventDefault());
+  $('#hlleg').addEventListener('click', e => { const bt = e.target.closest('[data-hlcat]'); if (!bt) return; if (!lastSel || !lastSel.name) return toast(tr('Sélectionnez d’abord un mot dans le texte.')); applyCat(lastSel.name, bt.dataset.hlcat); hideSel(); lastSel = null; });
   tx.addEventListener('input', () => {
     setText(tx.value); scheduleSave(); $('#sstat').innerHTML = 'Analyse…';
     clearTimeout(t); t = setTimeout(() => { reanalyse(true); refreshSide(); hl.refresh(); }, 600);
   });
   $('#slist').addEventListener('click', e => { const b = e.target.closest('.sitem'); if (b) goLine(+b.dataset.line); });
+  $('#smnt').addEventListener('click', e => { const u = e.target.closest('[data-unign]'); if (!u) return; p.ignore = (p.ignore || []).filter(x => x !== u.dataset.unign); scheduleSave(); reanalyse(false); refreshSide(); hl.refresh(); });
   $('#smnt').addEventListener('change', e => { const n = e.target.dataset.mtag; if (n == null) return; const v = e.target.value; p.tags ||= {}; if (v === '-' || !v) delete p.tags[n.toLowerCase()]; else p.tags[n.toLowerCase()] = v; scheduleSave(); reanalyse(false); refreshSide(); hl.refresh(); });
   body.querySelector('.snav').addEventListener('click', async e => {
     if (e.target.closest('[data-cliptpl]')) { tx.value = '[Intro 0:00] EXT. LIEU - NUIT\n(Ce que l’on voit)\nAvec : Artiste\n\n[Couplet 1 0:15] INT. LIEU - JOUR\n\n\n[Refrain 0:45]\n\n\n[Couplet 2 1:15]\n\n\n[Refrain 1:45]\n\n\n[Pont 2:15]\n\n\n[Refrain final 2:35]\n\n\n[Outro 3:00]\n'; tx.dispatchEvent(new Event('input')); e.target.closest('[data-cliptpl]').remove(); tx.focus(); return; }

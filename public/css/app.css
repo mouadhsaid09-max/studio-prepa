@@ -1211,3 +1211,14 @@ html[dir=rtl] .strip .p,html[dir=rtl] .sb .strip .p{text-align:start}
 @media (max-width:980px){.br-grid,.br-grid.two{grid-template-columns:1fr}.br-kpi{flex-wrap:wrap}}
 .br-d{display:grid;grid-template-columns:1fr 170px}
 .br-ok .aip-ck input:checked~span{text-decoration:none;color:#1f6b33;font-weight:600}
+
+/* ---------- Classer une sélection ---------- */
+.seltool{position:fixed;z-index:210;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:560px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 14px 40px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.06);animation:stIn .12s ease-out}
+@keyframes stIn{from{opacity:0;transform:translateY(4px)}}
+.seltool .st-n{font-size:12px;font-weight:700;padding:0 6px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seltool button,.hlleg button{border:0;font:inherit;font-size:12px;padding:5px 9px;border-radius:999px;cursor:pointer;color:#2c2c2e;transition:transform .1s,box-shadow .15s}
+.seltool button:hover,.hlleg button:hover{box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.seltool button.on{box-shadow:inset 0 0 0 2px #1d1d1f;font-weight:700}
+.seltool .st-x{background:#fff0ef;color:#c4271c}
+.hlleg button{font-size:11.5px;padding:2px 8px}
+@media (prefers-reduced-motion:reduce){.seltool{animation:none}}

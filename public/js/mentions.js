@@ -8,7 +8,7 @@ const catLabel = c => tr((MENTION_CATS.find(x => x[0] === c) || [, 'Objet'])[1])
 const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 // Position du curseur dans un textarea/input (copie invisible du champ)
-function caretXY(el) {
+export function caretXY(el, pos) {
   if (el.isContentEditable) {
     const sel = getSelection(); let r = sel.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : null;
     if (!r || (!r.width && !r.height && !r.left)) r = el.getBoundingClientRect();
@@ -17,7 +17,7 @@ function caretXY(el) {
   const cs = getComputedStyle(el), d = document.createElement('div');
   ['boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderLeftWidth', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform', 'wordSpacing', 'tabSize', 'direction'].forEach(k => d.style[k] = cs[k]);
   Object.assign(d.style, { position: 'absolute', visibility: 'hidden', whiteSpace: el.tagName === 'INPUT' ? 'pre' : 'pre-wrap', wordWrap: 'break-word', overflow: 'hidden', top: 0, left: '-9999px' });
-  d.textContent = el.value.slice(0, el.selectionStart);
+  d.textContent = el.value.slice(0, pos ?? el.selectionStart);
   const m = document.createElement('span'); m.textContent = '​'; d.appendChild(m);
   document.body.appendChild(d);
   const r = el.getBoundingClientRect(), x = r.left + m.offsetLeft - el.scrollLeft, y = r.top + m.offsetTop - el.scrollTop + parseFloat(cs.lineHeight || 18);
