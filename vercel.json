@@ -3,5 +3,6 @@
   "framework": null,
   "installCommand": "npm install",
   "buildCommand": "bash demo/build.sh",
-  "outputDirectory": "demo/site"
+  "outputDirectory": "demo/site",
+  "cleanUrls": true
 }

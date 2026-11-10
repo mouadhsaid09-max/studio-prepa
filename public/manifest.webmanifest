@@ -1,6 +1,6 @@
 {
-  "name": "Studio Prépa",
-  "short_name": "Studio Prépa",
+  "name": "GOSET.ai",
+  "short_name": "GOSET.ai",
   "description": "Préparation de tournage : canvas, scénario, dépouillement, plan de travail, feuilles de service.",
   "start_url": "/",
   "display": "standalone",

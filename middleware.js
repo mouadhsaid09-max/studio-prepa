@@ -20,6 +20,8 @@ export default async function middleware(request) {
   const code = process.env.ACCESS_CODE;
   if (!code) return; // pas de code configuré : site ouvert
   const url = new URL(request.url);
+  // La page d'accueil (présentation, tarifs) reste publique ; le code protège l'application.
+  if (url.pathname === '/' || url.pathname === '/index' || url.pathname === '/index.html' || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/fonts/') || url.pathname === '/robots.txt') return;
   const good = await tokenFor(code);
 
   if (url.pathname === '/__access' && request.method === 'POST') {
@@ -27,7 +29,7 @@ export default async function middleware(request) {
     const given = String((form && form.get('code')) || '').trim();
     if (safeEq(await tokenFor(given), good)) {
       return new Response(null, { status: 303, headers: {
-        Location: '/',
+        Location: '/app',
         'Set-Cookie': `${COOKIE}=${good}; Path=/; Max-Age=${MAX_AGE}; HttpOnly; Secure; SameSite=Lax`,
         'Cache-Control': 'no-store'
       } });
@@ -53,7 +55,7 @@ const PAGE = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0b0b0d">
-<title>Studio Prépa — accès privé</title>
+<title>GOSET.ai — accès privé</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d1d1f'/%3E%3Crect x='7' y='14' width='18' height='11' rx='2' fill='%23ff9f0a'/%3E%3Cpath d='M7 12l17-4 1 3.5-17 4z' fill='%23ff9f0a'/%3E%3C/svg%3E">
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%}
@@ -97,7 +99,7 @@ html[data-lang=ar] main{direction:rtl}
     <rect x="8" y="27" width="48" height="29" rx="6" fill="url(#g)"/><path d="M16 38h24M16 46h16" stroke="#fff" stroke-opacity=".85" stroke-width="3.4" stroke-linecap="round"/>
     <g class="top"><rect x="8" y="15" width="48" height="10" rx="3" fill="#2c2c2e"/><path d="M15 15l-5 10h6l5-10zM28 15l-5 10h6l5-10zM41 15l-5 10h6l5-10z" fill="#f5f5f7"/></g></svg>
   <p class="k"><span data-l="fr">Accès privé</span><span data-l="en">Private access</span><span data-l="ar">دخول خاص</span></p>
-  <h1>Studio Prépa</h1>
+  <h1>GOSET.ai</h1>
   <p class="sub"><span data-l="fr">Entrez le code d’accès pour continuer.</span><span data-l="en">Enter the access code to continue.</span><span data-l="ar">أدخل رمز الدخول للمتابعة.</span></p>
   <form method="post" action="/__access" autocomplete="off">
     <div class="f"><input id="c" name="code" type="password" required autofocus aria-label="Code d’accès" placeholder="Code d’accès" spellcheck="false" autocapitalize="off"><button type="button" class="eye" aria-label="Afficher" onclick="var i=document.getElementById('c');i.type=i.type==='password'?'text':'password'">◉</button></div>

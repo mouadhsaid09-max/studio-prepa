@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GOSET.ai — du scénario au plateau</title>
+<meta name="description" content="Collez votre scénario : GOSET.ai prépare le dépouillement, le plan de travail, les feuilles de service, le découpage, le budget et les factures. Films, séries, pubs, clips et productions IA.">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="GOSET.ai — du scénario au plateau">
+<meta property="og:description" content="La préparation de tournage, faite à partir de votre scénario.">
+<link rel="icon" type="image/png" href="/icons/icon-192.png">
+<link rel="preload" href="/fonts/archivo-latin-standard-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face{font-family:Archivo;font-style:normal;font-display:swap;font-weight:100 900;font-stretch:62% 125%;src:url(/fonts/archivo-latin-standard-normal.woff2) format("woff2-variations"),url(/fonts/archivo-latin-standard-normal.woff2) format("woff2")}
+@font-face{font-family:"Courier Prime";font-style:normal;font-display:swap;font-weight:400;src:url(/fonts/courier-prime-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Courier Prime";font-style:normal;font-display:swap;font-weight:700;src:url(/fonts/courier-prime-latin-700-normal.woff2) format("woff2")}
+:root{
+  --paper:#fff;--ink:#1c1b22;--grey:#6b6b76;--line:#e6e4ec;--soft:#f6f5f8;
+  --ej:#f3dd6b;--in:#93b5ea;--en:#9dd39a;--ij:#ffffff;
+  --acc:#ff9f0a;--acc2:#ff6a2b;--ai:#7b4dff;
+  --cast:#ff8a7a;--prop:#a8e0a0;--set:#ffd36b;--snd:#b9a6ff;
+  --w:1160px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.6 Archivo,system-ui,sans-serif;font-variation-settings:"wdth" 100;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img,svg{display:block}
+.wrap{max-width:var(--w);margin:0 auto;padding:0 28px}
+:focus-visible{outline:3px solid var(--acc);outline-offset:3px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Typo */
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif;margin:0;line-height:1.02;letter-spacing:-.01em}
+h1{font-size:clamp(48px,7.4vw,104px);font-weight:850;font-variation-settings:"wdth" 68}
+h2{font-size:clamp(36px,4.6vw,62px);font-weight:820;font-variation-settings:"wdth" 70}
+h3{font-size:22px;font-weight:700;font-variation-settings:"wdth" 88;line-height:1.15}
+.lead{font-size:clamp(18px,1.6vw,21px);color:#3d3c45;max-width:34em}
+p{margin:0}
+.script{font-family:"Courier Prime",ui-monospace,monospace}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;gap:10px;font:650 16px/1 Archivo;font-variation-settings:"wdth" 96;padding:16px 24px;border-radius:12px;text-decoration:none;cursor:pointer;border:0;transition:transform .15s,box-shadow .2s,background .2s}
+.btn.main{background:var(--ink);color:#fff}
+.btn.main:hover{background:#000;transform:translateY(-1px)}
+.btn.line{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn.line:hover{background:var(--soft)}
+
+/* Nav */
+nav{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.88);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid transparent;transition:border-color .2s}
+nav.sc{border-color:var(--line)}
+nav .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;font:850 22px/1 Archivo;font-variation-settings:"wdth" 75;letter-spacing:.01em}
+.logo i{font-style:normal;color:var(--acc2)}
+.nl{display:flex;gap:24px;margin-left:12px}
+.nl a{text-decoration:none;color:#46454f;font-size:15px}
+.nl a:hover{color:var(--ink)}
+.nr{margin-left:auto;display:flex;align-items:center;gap:10px}
+.nr .btn{padding:11px 16px;font-size:15px}
+.lang{display:flex;border-radius:9px;background:var(--soft);padding:3px}
+.lang button{border:0;background:none;font:600 13px Archivo;padding:6px 9px;border-radius:7px;color:var(--grey);cursor:pointer}
+.lang button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.signin{text-decoration:none;font-size:15px;font-weight:600;padding:10px 8px}
+
+/* Hero */
+.hero{padding:64px 0 40px;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+.hero h1 span{display:block}
+.hero .lead{margin:26px 0 34px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.hint{margin-top:18px;font-size:14px;color:var(--grey)}
+
+.page{position:relative;background:#fff;border-radius:4px;box-shadow:0 1px 0 var(--line),0 30px 70px -20px rgba(28,27,34,.28),0 0 0 1px var(--line);padding:34px 38px 30px;font-size:14.2px;line-height:1.55;transform:rotate(1.2deg)}
+.page .sh{font-weight:700;margin-bottom:12px}
+.page p{margin:0 0 11px}
+.page .ch{margin:14px 0 0 34%;font-weight:700}
+.page .dl{margin:0 14% 0 18%}
+.mk{border-radius:3px;padding:0 2px;background:transparent;transition:background .35s}
+.on .mk.c{background:var(--cast)}.on .mk.p{background:var(--prop)}.on .mk.s{background:var(--set)}.on .mk.n{background:var(--snd)}
+.tags{position:absolute;right:-14px;top:-16px;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.tag{font:600 12px Archivo;padding:5px 10px;border-radius:999px;background:#fff;box-shadow:0 6px 18px rgba(28,27,34,.14);opacity:0;transform:translateX(10px);transition:.4s}
+.tag b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.on .tag{opacity:1;transform:none}
+
+.board{margin-top:26px;display:flex;flex-direction:column;gap:5px;transform:rotate(-.6deg)}
+.strip{display:grid;grid-template-columns:44px 82px 1fr 60px;gap:12px;align-items:center;padding:10px 14px;border-radius:5px;font:600 13px/1.2 Archivo;font-variation-settings:"wdth" 82;box-shadow:inset 0 0 0 1px rgba(28,27,34,.12);opacity:0;transform:translateY(12px);transition:.5s cubic-bezier(.2,.8,.2,1)}
+.strip small{font-weight:500;color:#45444d}
+.strip .n{font:700 13px "Courier Prime"}
+.strip.ej{background:var(--ej)}.strip.in{background:var(--in)}.strip.en{background:var(--en)}.strip.ij{background:var(--ij)}
+.strip.day{background:var(--ink);color:#fff;box-shadow:none;grid-template-columns:1fr auto}
+.built .strip{opacity:1;transform:none}
+
+/* Sections */
+section{padding:110px 0}
+.sec-h{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:end;margin-bottom:56px}
+.sec-h p{color:#3d3c45;font-size:19px;max-width:30em}
+
+/* Chaîne : étapes réelles, donc numérotées */
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-top:2px solid var(--ink)}
+.st{padding:22px 22px 26px 0;border-right:1px solid var(--line);margin-right:22px}
+.st:last-child{border-right:0;margin-right:0}
+.st .k{font:700 15px "Courier Prime";color:var(--acc2)}
+.st h3{margin:10px 0 8px}
+.st p{font-size:15px;color:#4a4953}
+.art{margin-top:18px;height:92px;border-radius:8px;background:var(--soft);padding:12px;display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.art i{display:block;height:9px;border-radius:2px;background:#d9d7df}
+.art.a1 i:nth-child(2){width:70%;background:var(--cast)}.art.a1 i:nth-child(3){width:45%;background:var(--prop)}.art.a1 i:nth-child(4){width:60%;background:var(--set)}
+.art.a2 i{height:12px}.art.a2 i:nth-child(1){background:var(--ej)}.art.a2 i:nth-child(2){background:var(--in)}.art.a2 i:nth-child(3){background:var(--en)}.art.a2 i:nth-child(4){background:#fff;box-shadow:inset 0 0 0 1px #d9d7df}
+.art.a3{font:700 26px/1 "Courier Prime";justify-content:center}.art.a3 small{font:500 11px Archivo;color:var(--grey)}
+.art.a4{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.art.a4 i{height:auto;border-radius:4px;background:linear-gradient(135deg,#cfd3dc,#e9eaf0)}
+.art.a5{justify-content:space-between}.art.a5 b{font:800 20px Archivo;font-variation-settings:"wdth" 75}.art.a5 small{font-size:11px;color:var(--grey)}
+
+/* Formats */
+.formats{background:var(--soft)}
+.fm{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.f{background:#fff;border-radius:14px;padding:22px 18px 20px;box-shadow:0 0 0 1px var(--line)}
+.f svg{margin-bottom:16px}
+.f h3{font-size:19px}
+.f p{font-size:14px;color:#55545e;margin-top:6px}
+.f.ai{box-shadow:0 0 0 1.5px #d8ccff;background:linear-gradient(180deg,#fff,#f7f3ff)}
+.fnote{margin-top:22px;font-size:15px;color:#4a4953;max-width:46em}
+
+/* Studio IA */
+.ais{background:var(--ink);color:#fff}
+.ais .sec-h p{color:#c9c7d3}
+.aig{display:grid;grid-template-columns:1.1fr .9fr;gap:22px}
+.panel{border-radius:16px;background:#26252e;padding:26px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.panel h3{color:#fff}
+.panel p{color:#bdbbc8;font-size:15px;margin-top:8px}
+.sheet{display:grid;grid-template-columns:110px 1fr;gap:18px;margin-top:20px}
+.face{height:130px;border-radius:12px;background:radial-gradient(circle at 50% 38%,#3d3b49 0 22%,transparent 23%),radial-gradient(ellipse at 50% 100%,#3d3b49 0 46%,transparent 47%),#302f39}
+.tok{font:400 13px/1.5 "Courier Prime";color:#e3dcff;background:#1c1b22;border-radius:10px;padding:12px 14px}
+.tok b{color:#b9a6ff}
+.pipe{margin-top:18px;display:flex;flex-wrap:wrap;gap:6px}
+.pipe span{font:600 12.5px Archivo;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.07);color:#d6d4df}
+.pipe span.ok{background:var(--ai);color:#fff}
+.chk{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:9px;font-size:15px;color:#d6d4df}
+.chk li{display:flex;gap:10px}
+.chk li:before{content:"";flex:none;width:16px;height:16px;margin-top:4px;border-radius:5px;background:var(--ai)}
+
+/* Local */
+.loc{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.loc h3{margin-bottom:8px}
+.loc p{color:#4a4953;font-size:16px}
+.big{font:800 54px/1 Archivo;font-variation-settings:"wdth" 70;margin-bottom:14px}
+
+/* Tarifs en bandes de stripboard */
+.price-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.seg{display:inline-flex;background:var(--soft);border-radius:10px;padding:3px}
+.seg button{border:0;background:none;font:600 14px Archivo;padding:8px 13px;border-radius:8px;color:var(--grey);cursor:pointer}
+.seg button[aria-pressed=true]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.save{font-size:14px;color:#2f7d32;font-weight:600}
+.plans{display:flex;flex-direction:column;gap:8px}
+.plan{display:grid;grid-template-columns:200px 210px 1fr 190px;gap:24px;align-items:center;padding:22px 24px;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(28,27,34,.14)}
+.plan.p0{background:#fff}.plan.p1{background:var(--ej)}.plan.p2{background:var(--in)}.plan.p3{background:var(--en)}
+.plan h3{font-size:26px;font-variation-settings:"wdth" 72;font-weight:820}
+.plan .for{font-size:14px;color:#3b3a44;margin-top:4px}
+.amt{white-space:nowrap;font:800 40px/1 Archivo;font-variation-settings:"wdth" 70}
+.amt small{font:500 14px Archivo;color:#3b3a44;margin-left:4px}
+.per{font-size:13px;color:#3b3a44;margin-top:4px;min-height:1.2em}
+.plan ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:4px 18px;font-size:14.5px}
+.plan li{padding-left:18px;position:relative}
+.plan li:before{content:"";position:absolute;left:0;top:.62em;width:9px;height:2px;background:var(--ink)}
+.plan li.soon{color:#5a5963}
+.plan li.soon em{font-style:normal;font-size:12px;background:rgba(28,27,34,.08);padding:1px 6px;border-radius:5px;margin-left:4px}
+.plan .btn{justify-content:center}
+.plan.best{box-shadow:inset 0 0 0 2.5px var(--ink)}
+.pnote{margin-top:18px;font-size:14px;color:var(--grey);max-width:60em}
+
+/* Citations */
+.quotes{background:var(--soft)}
+.qg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+figure{margin:0;background:#fff;border-radius:4px;padding:28px 28px 24px;box-shadow:0 0 0 1px var(--line)}
+figure blockquote{margin:0;font:400 19px/1.5 "Courier Prime"}
+figure figcaption{margin-top:18px;font-size:14px;color:var(--grey)}
+figure figcaption b{color:var(--ink);font-weight:700;display:block;font-size:15px}
+figure.w{grid-column:span 2}
+.qnote{margin-top:22px;font-size:14px;color:var(--grey)}
+
+/* FAQ */
+.faq{max-width:820px}
+details{border-top:1px solid var(--line);padding:20px 0}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font:700 19px Archivo;font-variation-settings:"wdth" 90;list-style:none;display:flex;justify-content:space-between;gap:20px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";font-weight:400;font-size:26px;line-height:1;transition:transform .2s}
+details[open] summary:after{transform:rotate(45deg)}
+details p{margin-top:12px;color:#4a4953;max-width:44em}
+
+/* Fin */
+.end{background:var(--ink);color:#fff;text-align:left}
+.end .wrap{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
+.end h2{font-size:clamp(44px,6vw,86px)}
+.end .btn.main{background:#fff;color:var(--ink)}
+.end .btn.main:hover{background:#ececf1}
+footer{background:var(--ink);color:#9d9ba8;font-size:14px;padding:30px 0 40px;border-top:1px solid rgba(255,255,255,.08)}
+footer .wrap{display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+footer a{color:#cfcdd8;text-decoration:none}
+footer .logo{color:#fff;font-size:18px}
+
+/* Responsive */
+@media (max-width:1000px){
+  .hero .wrap,.sec-h,.aig,.end .wrap{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr 1fr}.st{border-right:0;margin-right:0;border-bottom:1px solid var(--line)}
+  .fm{grid-template-columns:repeat(3,1fr)}
+  .loc,.qg{grid-template-columns:1fr}figure.w{grid-column:auto}
+  .plan{grid-template-columns:1fr 1fr}.plan ul{grid-column:1/-1}.plan .btn{grid-column:1/-1}
+  .nl{display:none}
+}
+@media (max-width:620px){
+  .wrap{padding:0 18px}section{padding:76px 0}
+  .flow,.fm{grid-template-columns:1fr 1fr}.plan{grid-template-columns:1fr}.plan ul{grid-template-columns:1fr}
+  .page{padding:24px 22px;font-size:13px}.tags{display:none}
+  .strip{grid-template-columns:34px 70px 1fr;font-size:12px}.strip :nth-child(4){display:none}.strip.day{grid-template-columns:1fr auto}
+  .signin{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<nav id="nav"><div class="wrap">
+  <a class="logo" href="/" aria-label="GOSET.ai, accueil"><svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="27" width="48" height="29" rx="6" fill="#ff7a1a"/><g><rect x="8" y="15" width="48" height="10" rx="3" fill="#1c1b22"/><path d="M15 15l-5 10h6l5-10zM28 15l-5 10h6l5-10zM41 15l-5 10h6l5-10z" fill="#fff"/></g></svg><span>GOSET<i>.ai</i></span></a>
+  <div class="nl"><a href="#comment" data-t="n1">Comment ça marche</a><a href="#formats" data-t="n2">Formats</a><a href="#ia" data-t="n3">Studio IA</a><a href="#tarifs" data-t="n4">Tarifs</a></div>
+  <div class="nr">
+    <div class="lang" role="group" aria-label="Langue"><button data-lang="fr" aria-pressed="true">FR</button><button data-lang="en" aria-pressed="false">EN</button></div>
+    <a class="signin" href="/app" data-t="n5">Se connecter</a>
+    <a class="btn main" href="/app" data-t="n6">Essayer gratuitement</a>
+  </div>
+</div></nav>
+
+<main>
+<header class="hero"><div class="wrap">
+  <div>
+    <h1><span data-t="h1a">Collez le scénario.</span><span data-t="h1b">Le tournage se prépare.</span></h1>
+    <p class="lead" data-t="hl">GOSET.ai lit votre scénario et prépare le dépouillement, le plan de travail, les feuilles de service, le découpage, le budget et les factures. Pour les films, les séries, les pubs, les clips et les productions IA.</p>
+    <div class="cta"><a class="btn main" href="/app" data-t="c1">Commencer avec mon scénario</a><a class="btn line" href="#comment" data-t="c2">Voir comment ça marche</a></div>
+    <p class="hint" data-t="hh">Gratuit pour un projet. Aucune carte bancaire. En français, anglais et arabe.</p>
+  </div>
+  <div id="demo" aria-label="Exemple : une scène du scénario devient un plan de travail">
+    <div class="page script">
+      <div class="tags" aria-hidden="true"><span class="tag"><b style="background:var(--cast)"></b><span data-t="t1">2 rôles</span></span><span class="tag"><b style="background:var(--prop)"></b><span data-t="t2">1 accessoire</span></span><span class="tag"><b style="background:var(--set)"></b><span data-t="t3">1 décor</span></span><span class="tag"><b style="background:var(--snd)"></b><span data-t="t4">1 son</span></span></div>
+      <p class="sh">1. EXT. <span class="mk s">GARE DE TUNIS - QUAI</span> - JOUR</p>
+      <p>Le quai est noyé de monde. <span class="mk c">YASMINE</span> (28 ans), <span class="mk p">valise</span> à la main, cherche quelqu’un des yeux. <span class="mk n">Un haut-parleur annonce un retard.</span></p>
+      <p class="ch">YASMINE</p>
+      <p class="dl">Il avait promis d’être là.</p>
+      <p><span class="mk c">KARIM</span> (60 ans), le chef de gare, s’approche.</p>
+    </div>
+    <div class="board" aria-hidden="true">
+      <div class="strip day"><span data-t="d1">Jour 1 · Gare de Tunis</span><span>PAT 7:00</span></div>
+      <div class="strip ej"><span class="n">1</span><span>EXT JOUR</span><span>Gare de Tunis - Quai <small>Yasmine, Karim</small></span><span>1 4/8</span></div>
+      <div class="strip en"><span class="n">7</span><span>EXT NUIT</span><span>Gare de Tunis - Quai <small>Yasmine, Omar</small></span><span>2/8</span></div>
+      <div class="strip ij"><span class="n">2</span><span>INT JOUR</span><span>Appartement - Cuisine <small>Yasmine</small></span><span>6/8</span></div>
+      <div class="strip in"><span class="n">8</span><span>INT NUIT</span><span>Train - Compartiment <small>Yasmine, Omar</small></span><span>1 2/8</span></div>
+    </div>
+  </div>
+</div></header>
+
+<section id="comment"><div class="wrap">
+  <div class="sec-h"><h2 data-t="s1">Un scénario. Tous les documents du tournage.</h2><p data-t="s1p">Vous écrivez, GOSET.ai range. Chaque document suit votre scénario : changez une scène, et le dépouillement, le plan de travail et les feuilles de service se mettent à jour.</p></div>
+  <div class="flow">
+    <div class="st"><span class="k">1</span><h3 data-t="f1">Dépouillement</h3><p data-t="f1p">Rôles, figurants, accessoires, costumes, décors et sons repérés scène par scène.</p><div class="art a1" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+    <div class="st"><span class="k">2</span><h3 data-t="f2">Plan de travail</h3><p data-t="f2p">Les séquences regroupées par décor et par jour, en bandes de couleur à déplacer.</p><div class="art a2" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+    <div class="st"><span class="k">3</span><h3 data-t="f3">Feuilles de service</h3><p data-t="f3p">Horaires, lieux, comédiens convoqués et indisponibilités, prêtes à envoyer à l’équipe.</p><div class="art a3" aria-hidden="true">7:00<small data-t="f3s">Prêt à tourner</small></div></div>
+    <div class="st"><span class="k">4</span><h3 data-t="f4">Découpage et storyboard</h3><p data-t="f4p">Plans, valeurs, mouvements et croquis, avec des moodboards générés pour chaque scène.</p><div class="art a4" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+    <div class="st"><span class="k">5</span><h3 data-t="f5">Budget et factures</h3><p data-t="f5p">Budget en TND, EUR et USD, puis devis et factures PDF avec votre logo et votre signature.</p><div class="art a5" aria-hidden="true"><small data-t="f5s">Net à payer</small><b>16 244,500 TND</b></div></div>
+  </div>
+</div></section>
+
+<section id="formats" class="formats"><div class="wrap">
+  <div class="sec-h"><h2 data-t="s2">Pensé pour chaque format.</h2><p data-t="s2p">Un clip n’a pas de dialogues, une pub IA n’a pas de caméra. GOSET.ai adapte les outils au projet que vous créez.</p></div>
+  <div class="fm">
+    <div class="f"><svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="16" width="48" height="34" rx="7" fill="#1c1b22"/><path d="M14 16v34M50 16v34" stroke="#fff" stroke-width="3" stroke-dasharray="4 4"/></svg><h3 data-t="m1">Film</h3><p data-t="m1p">Long ou court métrage.</p></div>
+    <div class="f"><svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><rect x="16" y="10" width="40" height="30" rx="6" fill="#c9c7d3"/><rect x="8" y="20" width="40" height="32" rx="6" fill="#1c1b22"/></svg><h3 data-t="m2">Série</h3><p data-t="m2p">Plusieurs épisodes, un seul projet.</p></div>
+    <div class="f"><svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8h30a4 4 0 0 1 4 4v42l-19-8-19 8V12a4 4 0 0 1 4-4z" fill="#1c1b22"/></svg><h3 data-t="m3">Publicité</h3><p data-t="m3p">Spot, film de marque.</p></div>
+    <div class="f"><svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="46" r="10" fill="#1c1b22"/><path d="M30 46V12l20 6v10l-14-4" fill="none" stroke="#1c1b22" stroke-width="6" stroke-linejoin="round"/></svg><h3 data-t="m4">Clip</h3><p data-t="m4p">Paroles et sections, pas de scénario.</p></div>
+    <div class="f ai"><svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 8h30a4 4 0 0 1 4 4v42l-19-8-19 8V12a4 4 0 0 1 4-4z" fill="#7b4dff"/><path d="M31 22l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fff"/></svg><h3 data-t="m5">Pub IA</h3><p data-t="m5p">Générée avec l’IA.</p></div>
+    <div class="f ai"><svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><rect x="16" y="10" width="40" height="30" rx="6" fill="#d8ccff"/><rect x="8" y="20" width="40" height="32" rx="6" fill="#7b4dff"/><path d="M28 28l2.5 6.5 6.5 2.5-6.5 2.5L28 46l-2.5-6.5L19 37l6.5-2.5z" fill="#fff"/></svg><h3 data-t="m6">Mini-série IA</h3><p data-t="m6p">Personnages cohérents d’un épisode à l’autre.</p></div>
+  </div>
+  <p class="fnote" data-t="fn">Les projets IA remplacent l’équipement caméra par des fiches personnages, des prompts et un suivi de post-production. Les clips utilisent les paroles et les sections de la chanson.</p>
+</div></section>
+
+<section id="ia" class="ais"><div class="wrap">
+  <div class="sec-h"><h2 data-t="s3">Le studio IA, organisé comme un vrai tournage.</h2><p data-t="s3p">Gardez les mêmes visages et le même style d’un plan à l’autre, puis suivez chaque plan jusqu’à la livraison.</p></div>
+  <div class="aig">
+    <div class="panel">
+      <h3 data-t="a1">Fiches personnages et prompts</h3>
+      <p data-t="a1p">Apparence, tenue, voix et jeton de cohérence pour chaque personnage. Les prompts image et vidéo de chaque plan sont écrits à partir du découpage.</p>
+      <div class="sheet"><div class="face" aria-hidden="true"></div>
+        <div class="tok" lang="en"><b>@yasmine</b>, 28, dark curly hair, beige trench coat, red scarf. Wide shot, exterior, day, Tunis station platform. Cinematic film still, 35mm, natural grain, aspect ratio 16:9.</div></div>
+    </div>
+    <div class="panel">
+      <h3 data-t="a2">Post-production suivie</h3>
+      <p data-t="a2p">Chaque plan avance étape par étape, avec l’outil et le seed notés pour pouvoir le refaire à l’identique.</p>
+      <div class="pipe" aria-label="Étapes"><span class="ok" data-t="p1">Généré</span><span class="ok" data-t="p2">Prise choisie</span><span class="ok" data-t="p3">Upscalé</span><span data-t="p4">Étalonné</span><span data-t="p5">Son et lip-sync</span><span data-t="p6">Validé</span></div>
+      <ul class="chk"><li data-t="k1">Mention « contenu généré par IA » pour YouTube, Meta et TikTok</li><li data-t="k2">Repères pour l’AI Act européen et les droits à l’image</li><li data-t="k3">Livrables 16:9, 9:16 et 1:1 avec sous-titres</li></ul>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="loc">
+    <div><div class="big">3</div><h3 data-t="l1">Langues</h3><p data-t="l1p">Interface et PDF en français, anglais et arabe, avec la mise en page de droite à gauche.</p></div>
+    <div><div class="big">TND</div><h3 data-t="l2">Votre devise</h3><p data-t="l2p">Budgets en dinars, euros ou dollars, TVA à 19 % et droit de timbre sur les factures. Le taux de change reste celui que vous saisissez.</p></div>
+    <div><div class="big">PDF</div><h3 data-t="l3">Prêt à partager</h3><p data-t="l3p">Présentation 16:9 du projet, feuilles de service, budget et factures, à envoyer ou à imprimer. Fonctionne aussi sur téléphone.</p></div>
+  </div>
+</div></section>
+
+<section id="tarifs" style="padding-top:20px"><div class="wrap">
+  <div class="sec-h"><h2 data-t="s4">Des tarifs pour chaque taille de production.</h2><p data-t="s4p">Commencez gratuitement. Passez à un plan payant quand vous préparez plusieurs projets ou que votre équipe grandit.</p></div>
+  <div class="price-top">
+    <div class="seg" role="group" aria-label="Période"><button data-per="m" aria-pressed="true" data-t="pm">Mensuel</button><button data-per="y" aria-pressed="false" data-t="py">Annuel</button></div>
+    <div class="seg" role="group" aria-label="Devise"><button data-cur="TND" aria-pressed="true">TND</button><button data-cur="EUR" aria-pressed="false">EUR</button><button data-cur="USD" aria-pressed="false">USD</button></div>
+    <span class="save" data-t="ps">2 mois offerts en annuel</span>
+  </div>
+  <div class="plans">
+    <div class="plan p0"><div><h3 data-t="q0">Découverte</h3><p class="for" data-t="q0f">Pour essayer sur un projet</p></div><div><div class="amt" data-p="0"></div><div class="per" data-per-l="0"></div></div>
+      <ul><li data-t="q0a">1 projet</li><li data-t="q0b">Dépouillement et plan de travail</li><li data-t="q0c">Feuilles de service</li><li data-t="q0d">Export PDF</li></ul>
+      <a class="btn line" href="/app" data-t="b0">Commencer gratuitement</a></div>
+    <div class="plan p1 best"><div><h3 data-t="q1">Réalisateur</h3><p class="for" data-t="q1f">Pour les indépendants et les courts métrages</p></div><div><div class="amt" data-p="1"></div><div class="per" data-per-l="1"></div></div>
+      <ul><li data-t="q1a">Projets illimités</li><li data-t="q1b">Découpage, storyboard et moodboards IA</li><li data-t="q1c">Budget en 3 devises</li><li data-t="q1d">Devis et factures PDF avec logo</li></ul>
+      <a class="btn main" href="/app" data-t="b1">Choisir Réalisateur</a></div>
+    <div class="plan p2"><div><h3 data-t="q2">Studio</h3><p class="for" data-t="q2f">Pour les boîtes de prod et les studios IA</p></div><div><div class="amt" data-p="2"></div><div class="per" data-per-l="2"></div></div>
+      <ul><li data-t="q2a">Tout Réalisateur</li><li data-t="q2b">Studio IA et post-production IA</li><li data-t="q2c">Séries, pubs et clips</li><li class="soon"><span data-t="q2d">Jusqu’à 5 membres</span> <em data-t="soon">bientôt</em></li></ul>
+      <a class="btn main" href="/app" data-t="b2">Choisir Studio</a></div>
+    <div class="plan p3"><div><h3 data-t="q3">Production</h3><p class="for" data-t="q3f">Pour les longs métrages et les grandes équipes</p></div><div><div class="amt" data-t="q3p">Sur devis</div><div class="per"></div></div>
+      <ul><li data-t="q3a">Tout Studio</li><li class="soon"><span data-t="q3b">Équipe illimitée</span> <em data-t="soon">bientôt</em></li><li data-t="q3c">Accompagnement à la prise en main</li><li class="soon"><span data-t="q3d">Envoi des feuilles de service</span> <em data-t="soon">bientôt</em></li></ul>
+      <a class="btn line" href="mailto:contact@goset.ai" data-t="b3">Nous contacter</a></div>
+  </div>
+  <p class="pnote" data-t="pn">Prix hors taxes. Les fonctions marquées « bientôt » sont en préparation et seront ajoutées au plan sans surcoût.</p>
+</div></section>
+
+<section class="quotes"><div class="wrap">
+  <div class="sec-h"><h2 data-t="s5">Le cinéma se prépare.</h2><p data-t="s5p">Ce que des cinéastes ont dit de leur métier.</p></div>
+  <div class="qg" id="qg"></div>
+  <p class="qnote" data-t="qn">Citations de cinéastes sur leur travail ; elles ne parlent pas de GOSET.ai. Les premiers avis de nos utilisateurs arrivent ici bientôt.</p>
+</div></section>
+
+<section><div class="wrap faq">
+  <h2 style="margin-bottom:34px" data-t="s6">Questions fréquentes</h2>
+  <details><summary data-t="x1">Quels fichiers puis-je importer ?</summary><p data-t="x1p">Un scénario collé, un fichier texte ou Word. Les scènes sont reconnues grâce aux en-têtes du type « 1. EXT. GARE - JOUR » ; pour un clip, les sections de la chanson entre crochets.</p></details>
+  <details><summary data-t="x2">Mes projets sont-ils privés ?</summary><p data-t="x2p">Oui. Vos projets ne sont visibles que par vous. L’accès à la plateforme est aussi protégé par un code pendant la phase de lancement.</p></details>
+  <details><summary data-t="x3">Les factures sont-elles officielles ?</summary><p data-t="x3p">Le PDF sert de devis, de pro forma ou de copie de facture. En Tunisie, la facture électronique officielle est émise sur la plateforme El Fatoora (TTN) avec une signature électronique qualifiée ; vérifiez les mentions avec votre comptable.</p></details>
+  <details><summary data-t="x4">Faut-il savoir utiliser l’IA ?</summary><p data-t="x4p">Non. Les prompts sont écrits pour vous à partir du découpage et des fiches personnages. Vous pouvez les modifier puis les copier dans l’outil de génération de votre choix.</p></details>
+</div></section>
+
+<section class="end"><div class="wrap">
+  <h2 data-t="e1">Votre prochain tournage commence par le scénario.</h2>
+  <a class="btn main" href="/app" data-t="e2">Essayer gratuitement</a>
+</div></section>
+</main>
+<footer><div class="wrap">
+  <a class="logo" href="/"><span>GOSET<i>.ai</i></span></a>
+  <span data-t="ft">Du scénario au plateau.</span>
+  <a href="#tarifs" data-t="n4">Tarifs</a><a href="/app" data-t="n5">Se connecter</a><a href="mailto:contact@goset.ai">contact@goset.ai</a>
+  <span style="margin-left:auto">© <span id="yr"></span> GOSET.ai</span>
+</div></footer>
+
+<script>
+(function(){
+  // ---------- Textes anglais (le français est dans la page) ----------
+  var EN={n1:'How it works',n2:'Formats',n3:'AI Studio',n4:'Pricing',n5:'Sign in',n6:'Try it free',
+    h1a:'Paste the script.',h1b:'The shoot gets ready.',hl:'GOSET.ai reads your script and prepares the breakdown, shooting schedule, call sheets, shot list, budget and invoices. For films, series, commercials, music videos and AI productions.',
+    c1:'Start with my script',c2:'See how it works',hh:'Free for one project. No credit card. In French, English and Arabic.',
+    t1:'2 roles',t2:'1 prop',t3:'1 set',t4:'1 sound',d1:'Day 1 · Tunis station',
+    s1:'One script. Every document of the shoot.',s1p:'You write, GOSET.ai sorts. Every document follows your script: change a scene and the breakdown, schedule and call sheets update.',
+    f1:'Breakdown',f1p:'Roles, extras, props, costumes, sets and sounds spotted scene by scene.',f2:'Shooting schedule',f2p:'Scenes grouped by set and by day, as colour strips you can drag.',f3:'Call sheets',f3p:'Times, locations, called actors and unavailability, ready to send to the crew.',f3s:'Ready to shoot',
+    f4:'Shot list and storyboard',f4p:'Shots, sizes, moves and sketches, with generated moodboards for each scene.',f5:'Budget and invoices',f5p:'Budget in TND, EUR and USD, then quotes and PDF invoices with your logo and signature.',f5s:'Amount due',
+    s2:'Built for every format.',s2p:'A music video has no dialogue, an AI commercial has no camera. GOSET.ai fits the tools to the project you create.',
+    m1:'Film',m1p:'Feature or short.',m2:'Series',m2p:'Several episodes, one project.',m3:'Commercial',m3p:'Spot, brand film.',m4:'Music video',m4p:'Lyrics and sections, no script.',m5:'AI commercial',m5p:'Made with AI.',m6:'AI mini-series',m6p:'Consistent characters across episodes.',
+    fn:'AI projects swap camera gear for character sheets, prompts and post-production tracking. Music videos use the song’s lyrics and sections.',
+    s3:'The AI studio, organised like a real shoot.',s3p:'Keep the same faces and style from shot to shot, then follow every shot through to delivery.',
+    a1:'Character sheets and prompts',a1p:'Look, outfit, voice and a consistency token for each character. Image and video prompts for every shot are written from the shot list.',
+    a2:'Tracked post-production',a2p:'Every shot moves stage by stage, with the tool and seed noted so it can be redone exactly.',
+    p1:'Generated',p2:'Take selected',p3:'Upscaled',p4:'Graded',p5:'Sound and lip-sync',p6:'Approved',
+    k1:'“AI-generated content” label for YouTube, Meta and TikTok',k2:'Pointers for the EU AI Act and image rights',k3:'16:9, 9:16 and 1:1 deliverables with subtitles',
+    l1:'Languages',l1p:'Interface and PDFs in French, English and Arabic, with right-to-left layout.',l2:'Your currency',l2p:'Budgets in dinars, euros or dollars, 19% VAT and stamp duty on invoices. The exchange rate stays the one you enter.',l3:'Ready to share',l3p:'A 16:9 project deck, call sheets, budget and invoices to send or print. Works on phones too.',
+    s4:'Pricing for every size of production.',s4p:'Start free. Move to a paid plan when you prepare several projects or your team grows.',pm:'Monthly',py:'Yearly',ps:'2 months free on yearly',
+    q0:'Discovery',q0f:'To try it on one project',q0a:'1 project',q0b:'Breakdown and schedule',q0c:'Call sheets',q0d:'PDF export',b0:'Start free',
+    q1:'Director',q1f:'For independents and short films',q1a:'Unlimited projects',q1b:'Shot list, storyboard and AI moodboards',q1c:'Budget in 3 currencies',q1d:'Quotes and PDF invoices with logo',b1:'Choose Director',
+    q2:'Studio',q2f:'For production companies and AI studios',q2a:'Everything in Director',q2b:'AI Studio and AI post-production',q2c:'Series, commercials and music videos',q2d:'Up to 5 members',b2:'Choose Studio',soon:'soon',
+    q3:'Production',q3f:'For features and large crews',q3p:'Custom',q3a:'Everything in Studio',q3b:'Unlimited team',q3c:'Onboarding support',q3d:'Call sheet sending',b3:'Contact us',
+    pn:'Prices exclude tax. Features marked “soon” are in progress and will be added to the plan at no extra cost.',
+    s5:'Cinema is prepared.',s5p:'What filmmakers have said about their craft.',qn:'Quotes from filmmakers about their work; they are not about GOSET.ai. Our first users’ reviews will appear here soon.',
+    s6:'Questions',x1:'Which files can I import?',x1p:'A pasted script, a text or Word file. Scenes are recognised from headings like “1. EXT. STATION - DAY”; for a music video, the song’s sections in square brackets.',
+    x2:'Are my projects private?',x2p:'Yes. Only you can see your projects. Access to the platform is also protected by a code during launch.',
+    x3:'Are the invoices official?',x3p:'The PDF serves as a quote, pro forma or invoice copy. In Tunisia the official e-invoice is issued on the El Fatoora platform (TTN) with a qualified electronic signature; check the mandatory details with your accountant.',
+    x4:'Do I need to know AI?',x4p:'No. Prompts are written for you from the shot list and character sheets. Edit them, then copy them into the generator of your choice.',
+    e1:'Your next shoot starts with the script.',e2:'Try it free',ft:'From script to set.'};
+  var FR={}; document.querySelectorAll('[data-t]').forEach(function(el){ if(!(el.dataset.t in FR)) FR[el.dataset.t]=el.innerHTML; });
+
+  // ---------- Tarifs (à ajuster ici) ----------
+  var PRICE={TND:[0,39,119],EUR:[0,12,35],USD:[0,13,38]};
+  var st={lang:'fr',cur:'TND',per:'m'};
+  var fmt=function(v,c){return new Intl.NumberFormat(st.lang==='en'?'en-GB':'fr-FR',{maximumFractionDigits:0}).format(v)+(c==='TND'?' TND':c==='EUR'?' €':' $');};
+  function prices(){
+    [0,1,2].forEach(function(i){
+      var m=PRICE[st.cur][i], v=st.per==='y'?m*10/12:m;
+      document.querySelector('[data-p="'+i+'"]').innerHTML=i===0?(st.lang==='en'?'Free':'Gratuit'):fmt(Math.round(v),st.cur)+'<small>'+(st.lang==='en'?'/ month':'/ mois')+'</small>';
+      document.querySelector('[data-per-l="'+i+'"]').textContent=i===0?'':st.per==='y'?(st.lang==='en'?'billed ':'soit ')+fmt(m*10,st.cur)+(st.lang==='en'?' a year':' par an'):(st.lang==='en'?'billed monthly':'facturé chaque mois');
+    });
+    document.querySelectorAll('[data-per]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.per===st.per)});
+    document.querySelectorAll('[data-cur]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.cur===st.cur)});
+  }
+  document.querySelectorAll('[data-per]').forEach(function(b){b.onclick=function(){st.per=b.dataset.per;prices()}});
+  document.querySelectorAll('[data-cur]').forEach(function(b){b.onclick=function(){st.cur=b.dataset.cur;prices()}});
+
+  // ---------- Citations vérifiées ----------
+  var Q=[['Si cela peut être écrit ou pensé, cela peut être filmé.','If it can be written, or thought, it can be filmed.','Stanley Kubrick','Réalisateur','Director',1],
+    ['Le drame, c’est la vie dont on a coupé les moments ennuyeux.','Drama is life with the dull bits cut out.','Alfred Hitchcock','Réalisateur et producteur','Director and producer'],
+    ['Le cinéma, c’est ce qui est dans le cadre et ce qui est hors du cadre.','Cinema is a matter of what’s in the frame and what’s out.','Martin Scorsese','Réalisateur','Director'],
+    ['L’ennemi de l’art, c’est l’absence de limites.','The enemy of art is the absence of limitations.','Orson Welles','Réalisateur, acteur et producteur','Director, actor and producer',1],
+    ['Le cinéma… j’en mourrais sans lui.','Cinema… I would die without it.','Youssef Chahine','Réalisateur','Director']];
+  function quotes(){var en=st.lang==='en';document.getElementById('qg').innerHTML=Q.map(function(q,i){return '<figure class="'+(i===0?'w':'')+'"><blockquote>« '+(en?q[1]:q[0])+' »</blockquote><figcaption><b>'+q[2]+'</b>'+(en?q[4]:q[3])+'</figcaption></figure>'}).join('').replace(/« /g,en?'“':'« ').replace(/ »/g,en?'”':' »');}
+
+  // ---------- Langue ----------
+  function lang(l){
+    st.lang=l; document.documentElement.lang=l;
+    document.querySelectorAll('[data-t]').forEach(function(el){var k=el.dataset.t;el.innerHTML=l==='en'&&EN[k]!=null?EN[k]:FR[k];});
+    document.querySelectorAll('[data-lang]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.lang===l)});
+    if(l==='en'&&st.cur==='TND'){} prices(); quotes();
+    try{localStorage.setItem('sp.lang',l)}catch(e){}
+  }
+  document.querySelectorAll('[data-lang]').forEach(function(b){b.onclick=function(){lang(b.dataset.lang)}});
+  var l0='fr'; try{l0=localStorage.getItem('sp.lang')||((navigator.language||'fr').slice(0,2))}catch(e){} lang(l0==='en'?'en':'fr');
+  document.getElementById('yr').textContent=new Date().getFullYear();
+
+  // ---------- Un seul moment animé : la scène se dépouille, puis le plan de travail se construit ----------
+  var demo=document.getElementById('demo'), page=demo.querySelector('.page'), board=demo.querySelector('.board');
+  var still=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(still){page.classList.add('on');board.classList.add('built');}
+  else{
+    setTimeout(function(){page.classList.add('on')},700);
+    board.querySelectorAll('.strip').forEach(function(s,i){s.style.transitionDelay=(1.5+i*.14)+'s'});
+    setTimeout(function(){board.classList.add('built')},50);
+  }
+  var nav=document.getElementById('nav'); addEventListener('scroll',function(){nav.classList.toggle('sc',scrollY>8)},{passive:true});
+})();
+</script>
+</body>
+</html>

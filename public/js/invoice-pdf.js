@@ -14,7 +14,7 @@ export function buildInvoicePdf({ PDFDocument, fonts }, inv, issuer, project) {
   const T = invTotals(inv);
   const W = 595.28, H = 841.89, M = 42, ink = '#1d1d1f', mute = '#6e6e73', line = '#e3e3e8', soft = '#f6f6f8', acc = issuer.accent || '#ff7a1a';
   const title = t[inv.type] || t.facture;
-  const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: `${title} ${inv.num || ''}`.trim(), Author: issuer.name || '', Creator: 'Studio Prépa' } });
+  const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: `${title} ${inv.num || ''}`.trim(), Author: issuer.name || '', Creator: 'GOSET.ai' } });
   doc.registerFont('R', fonts.R); doc.registerFont('B', fonts.B); doc.registerFont('T', fonts.T);
   const fmtD = s => { if (!s) return ''; const x = new Date(s + 'T12:00:00'); return isNaN(x) ? s : x.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' }); };
   const img = (src, x, y, w, h, align = 'left') => { if (!src || !/^data:image\/(png|jpe?g);base64,/.test(src)) return 0; try { const o = doc.openImage(src), k = Math.min(w / o.width, h / o.height, 1), iw = o.width * k, ih = o.height * k; doc.image(o, align === 'right' ? x + w - iw : align === 'center' ? x + (w - iw) / 2 : x, y + (h - ih) / 2, { width: iw, height: ih }); return iw; } catch (e) { return 0; } };

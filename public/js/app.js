@@ -92,7 +92,7 @@ async function renderLogin() {
   let mode = hasUsers ? 'login' : 'register';
   const draw = () => {
     app.innerHTML = `<div class="login"><div class="lcard">
-      <select class="langsel" aria-label="Langue">${LANGS.map(([k, l]) => `<option value="${k}" ${k === LANG ? 'selected' : ''}>${l}</option>`).join('')}</select><div class="logo">${SLATE}</div><h1>Studio Prépa</h1><p class="note">Du scénario aux feuilles de service.</p>
+      <select class="langsel" aria-label="Langue">${LANGS.map(([k, l]) => `<option value="${k}" ${k === LANG ? 'selected' : ''}>${l}</option>`).join('')}</select><div class="logo">${SLATE}</div><h1>GOSET.ai</h1><p class="note">Du scénario aux feuilles de service.</p>
       <div class="seg wide"><button data-m="login" class="${mode === 'login' ? 'on' : ''}">Connexion</button><button data-m="register" class="${mode === 'register' ? 'on' : ''}">Créer un compte</button></div>
       <form id="lf">
         ${mode === 'register' ? '<input name="name" placeholder="Nom" autocomplete="name">' : ''}
@@ -148,10 +148,10 @@ function thumb(p) {
 }
 const TITLES = { recent: 'Récents', all: 'Tous les projets', fav: 'Favoris', trash: 'Corbeille' };
 async function renderFiles() {
-  document.title = 'Studio Prépa';
+  document.title = 'GOSET.ai';
   app.innerHTML = `<div class="files">
     <aside class="side">
-      <div class="brand">${SLATE}<b>Studio Prépa</b></div>
+      <div class="brand">${SLATE}<b>GOSET.ai</b></div>
       <div class="grp">Projets</div>
       ${Object.entries(TITLES).map(([k, t]) => `<a href="#/files/${k}" class="${S.filter === k ? 'on' : ''}"><span class="ic ic-${k}"></span>${t}</a>`).join('')}
       <div class="grp">Réglages</div>
@@ -284,7 +284,7 @@ function newProject() {
   const SRC = [['empty', 'blank', 'Canvas vierge', 'Partir de zéro : idées, mind map, moodboard'], ['file', 'import', 'Importer un scénario', 'PDF, Word, Final Draft, Fountain ou texte'], ['sample', 'sample', 'Exemple', '« Le Dernier Train », 8 scènes']];
   const st = { kind: 'film', eps: 3, src: 'empty', color: P_COLORS[0], cover: null, file: null };
   const card = f => `<div class="npk-o ${f.ai ? 'ai' : ''}" role="button" tabindex="0" data-kind="${f.id}">${icon(f.icon, f.ai ? 44 : 40)}<div class="npk-t"><b>${f.label}</b><span class="npk-sub">${f.sub}</span></div>${f.ai ? '<span class="ai-badge">IA</span>' : ''}</div>`;
-  modal(`${cinemaPanel()}<div class="npg-main"><div class="npg-head"><div><span class="npg-kick">Studio Prépa · ${new Date().getFullYear()}</span><h3>Nouveau projet</h3></div><button class="x" data-close>✕</button></div>
+  modal(`${cinemaPanel()}<div class="npg-main"><div class="npg-head"><div><span class="npg-kick">GOSET.ai · ${new Date().getFullYear()}</span><h3>Nouveau projet</h3></div><button class="x" data-close>✕</button></div>
     <div class="npg-lbl">Format</div>
     <div class="npk">${FORMATS.filter(f => !f.ai).map(card).join('')}</div>
     <div class="npg-lbl ai-l">Production IA <span>personnages, prompts, style</span></div>
@@ -495,7 +495,7 @@ initBible({
     const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Erreur'); return j.url;
   },
   gotoScene: k => { const sc = S.P.scenes.find(x => x.k === k); S.gotoScene = k; nav(`#/p/${S.project.id}` + (sc && sc.epId ? `/e/${sc.epId}` : '') + '/script'); },
-  onTitle: () => { const pn = document.querySelector('.pname'); if (pn) pn.value = S.project.name; document.title = S.project.name + ' · Studio Prépa'; }
+  onTitle: () => { const pn = document.querySelector('.pname'); if (pn) pn.value = S.project.name; document.title = S.project.name + ' · GOSET.ai'; }
 });
 
 initPrepAI({
@@ -575,13 +575,13 @@ async function openProject(id, tab, ep) {
       <div class="pbody" id="pbody"></div></div>`;
     mountButton(app.querySelector('.proj'));
     const pn = app.querySelector('.pname');
-    pn.oninput = () => { S.project.name = pn.value || 'Sans titre'; document.title = S.project.name + ' · Studio Prépa'; scheduleSave(); };
+    pn.oninput = () => { S.project.name = pn.value || 'Sans titre'; document.title = S.project.name + ' · GOSET.ai'; scheduleSave(); };
     pn.onkeydown = e => { if (e.key === 'Enter') pn.blur(); };
     app.querySelector('.epsel')?.addEventListener('change', e => { const v = e.target.value; nav(`#/p/${id}` + (v ? `/e/${v}` : '') + '/' + S.tab); });
     app.querySelector('#pexport').onclick = openExport;
     bindProdEvents();
   }
-  document.title = p.name + ' · Studio Prépa';
+  document.title = p.name + ' · GOSET.ai';
   S.tab = tabsFor(p).some(t => t[0] === tab) ? tab : 'canvas';
   app.querySelectorAll('.ptabs a').forEach(a => a.classList.toggle('on', a.dataset.t === S.tab));
   app.querySelector('.ptabs a.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
@@ -591,7 +591,7 @@ async function openProject(id, tab, ep) {
 function renderSeriesHome() {
   const p = S.project, P = S.P; S.shell = 'home'; S.ep = null;
   if (S.board) { S.board.destroy(); S.board = null; }
-  document.title = p.name + ' · Studio Prépa';
+  document.title = p.name + ' · GOSET.ai';
   const epTile = (e, i) => {
     const sc = P.scenes.filter(x => x.epId === e.id), mins = sc.reduce((a, x) => a + x.est, 0);
     return `<div class="tile eptile" data-ep="${e.id}" tabindex="0"><div class="thumb strips" style="--c:${p.color}">${sc.slice(0, 12).map(x => `<i class="sw ${cls(x)}"></i>`).join('') || '<span class="emptyep">Vide</span>'}</div>

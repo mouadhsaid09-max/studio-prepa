@@ -21,7 +21,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
   const want = new Set(sections && sections.length ? sections : SECTIONS.map(s => s[0]));
   const P = analyse(project), set = { ...DEFAULT_SETTINGS(), ...(project.settings || {}) }, edits = project.edits || {};
   const items = (project.canvas && project.canvas.items) || [], links = (project.canvas && project.canvas.links) || [];
-  const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: project.name, Creator: 'Studio Prépa' } });
+  const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: project.name, Creator: 'GOSET.ai' } });
   doc.registerFont('R', fonts.R); doc.registerFont('B', fonts.B); doc.registerFont('T', fonts.T); doc.registerFont('H', fonts.H || fonts.R);
   // ---------- Langue : libellés traduits + texte arabe de droite à gauche ----------
   const T = v => { if (typeof v !== 'string' || lang === 'fr') return v; const m = v.match(/^(.*) \(suite\)$/); return m ? tr(m[1], lang) + ' (' + tr('suite', lang) + ')' : tr(v, lang); };
@@ -165,7 +165,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
       doc.font('T').fontSize(24).fillColor('#ffffff').text(String(v), x, H - 120, { lineBreak: false });
       doc.font('B').fontSize(8).fillColor('#a1a1a6').text(l.toUpperCase(), x, H - 88, { characterSpacing: 1, lineBreak: false });
     });
-    doc.font('R').fontSize(8).fillColor('#6e6e73').text(T('Généré le') + ' ' + new Date().toLocaleDateString(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric' }) + ' · Studio Prépa', tx + 10, H - 44);
+    doc.font('R').fontSize(8).fillColor('#6e6e73').text(T('Généré le') + ' ' + new Date().toLocaleDateString(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric' }) + ' · GOSET.ai', tx + 10, H - 44);
   }
 
   // ---------- Le film ----------

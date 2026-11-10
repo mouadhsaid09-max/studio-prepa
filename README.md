@@ -103,3 +103,7 @@ Bouton **Facture / devis PDF** : facture, devis, pro forma ou avoir en A4.
 Avant la page de connexion, le site en ligne demande un code d'accès (fichier `middleware.js`).
 Le code est la variable d'environnement Vercel **ACCESS_CODE** (Project → Settings → Environment Variables) : il n'est jamais écrit dans le dépôt.
 Une fois saisi, l'accès reste ouvert 30 jours sur l'appareil. Changer la valeur puis redéployer oblige tout le monde à ressaisir le nouveau code. Sans variable, le site est ouvert.
+
+## GOSET.ai : page d'accueil et application
+- `/` : page d'accueil publique (présentation, formats, Studio IA, tarifs, questions) — fichier `landing/index.html`. Les prix se changent dans l'objet `PRICE` en bas de ce fichier.
+- `/app` : l'application (code d'accès, puis connexion).

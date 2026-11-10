@@ -1,4 +1,4 @@
-// Studio Prépa — serveur local (Node 18+)
+// GOSET.ai — serveur local (Node 18+)
 import express from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
@@ -423,7 +423,7 @@ app.get(/^\/(?!api\/).*/, (req, res) => res.sendFile(path.join(ROOT, 'public', '
 app.listen(PORT, HOST, () => {
   const url = `http://localhost:${PORT}`;
   const lan = HOST === '0.0.0.0' ? lanUrls() : [];
-  console.log(`\n  🎬  Studio Prépa est lancé : ${url}`);
+  console.log(`\n  🎬  GOSET.ai est lancé : ${url}`);
   if (lan.length) console.log(`  📱  Sur le téléphone (même Wi-Fi) : ${lan.join('  ou  ')}`);
   console.log('  (Ctrl+C pour arrêter)\n');
   if (process.env.OPEN_BROWSER !== '0') {
