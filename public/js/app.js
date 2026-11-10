@@ -1,4 +1,4 @@
-import { esc, analyse, diff, SAMPLE, SAMPLE_CLIP, DEFAULT_SETTINGS, fmtE, cls, isSeries, stripOrder, orderFromDays, unavail, fdate } from './parser.js';
+import { esc, analyse, diff, SAMPLE, SAMPLE_CLIP, SAMPLE_AI, SAMPLE_AI_SETUP, DEFAULT_SETTINGS, fmtE, cls, isSeries, stripOrder, orderFromDays, unavail, fdate } from './parser.js';
 import { renderDep, renderArt, renderPdt, renderFds, renderDec, renderBud, budgetCSV, fmtRange } from './production.js';
 import { budgetDefaults } from './budget.js';
 import { Board } from './canvas.js';
@@ -312,7 +312,7 @@ function newProject() {
       };
       const drawSrc = () => {
         const clip = st.kind === 'clip';
-        q('#nsrc').innerHTML = SRC.map(([v, ic, title, sub], i) => (clip && v === 'file' ? (title = 'Importer des paroles', sub = 'Texte ou Word, sections entre crochets') : clip && v === 'sample' ? (title = 'Exemple', sub = '« Tunis la nuit », 8 sections') : 0, true) && `<button class="npg-row ${v === st.src ? 'on' : ''}" data-src="${v}"><span class="nr">0${i + 1}</span>${icon(ic, 30)}<span class="bd"><b>${v === 'file' && st.file ? esc(st.file.name) : title}</b><span>${v === 'file' && fmt(st.kind).eps && !st.file ? 'Le fichier devient l’épisode 1' : sub}</span></span><i class="rd"></i></button>`).join('');
+        q('#nsrc').innerHTML = SRC.map(([v, ic, title, sub], i) => (clip && v === 'file' ? (title = 'Importer des paroles', sub = 'Texte ou Word, sections entre crochets') : clip && v === 'sample' ? (title = 'Exemple', sub = '« Tunis la nuit », 8 sections') : fmt(st.kind).ai && v === 'sample' ? (title = 'Exemple IA', sub = '« Zahra », pub parfum, 6 scènes et 2 personnages') : 0, true) && `<button class="npg-row ${v === st.src ? 'on' : ''}" data-src="${v}"><span class="nr">0${i + 1}</span>${icon(ic, 30)}<span class="bd"><b>${v === 'file' && st.file ? esc(st.file.name) : title}</b><span>${v === 'file' && fmt(st.kind).eps && !st.file ? 'Le fichier devient l’épisode 1' : sub}</span></span><i class="rd"></i></button>`).join('');
       };
       const drawCover = () => { q('#ncov').innerHTML = coverHTML(st.cover, st.color, q('#np').value.trim(), st.kind); q('#ncclr').classList.toggle('hidden', !st.cover); bg.querySelectorAll('[data-col]').forEach(b => b.classList.toggle('on', b.dataset.col === st.color)); };
       const setEps = v => { st.eps = Math.max(1, Math.min(40, parseInt(v) || 1)); nep.value = st.eps; slate(); };
@@ -335,13 +335,14 @@ function newProject() {
       q('#ok').onclick = async () => {
         let name = q('#np').value.trim(), script = ''; setEps(nep.value);
         try {
-          if (st.src === 'sample') { if (st.kind === 'clip') { script = SAMPLE_CLIP; name ||= 'Tunis la nuit'; } else { script = SAMPLE; name ||= 'Le Dernier Train'; } }
+          if (st.src === 'sample') { if (st.kind === 'clip') { script = SAMPLE_CLIP; name ||= 'Tunis la nuit'; } else if (fmt(st.kind).ai) { script = SAMPLE_AI; name ||= 'Zahra — eau de parfum'; } else { script = SAMPLE; name ||= 'Le Dernier Train'; } }
           if (st.src === 'file') { if (!st.file) { nf.click(); return; } q('#ok').textContent = tr('Lecture…'); script = await readFile(st.file); }
           const body = { name: name || tr('Sans titre'), script, settings: DEFAULT_SETTINGS(), format: st.kind };
           if (fmt(st.kind).eps) { body.episodes = [...Array(st.eps)].map((_, i) => ({ id: epId(), name: tr('Épisode ' + (i + 1)), script: i === 0 ? script : '' })); body.script = ''; }
           q('#ok').disabled = true;
           const p = (await api('/api/projects', { method: 'POST', body })).project;
           const extra = { color: st.color, format: st.kind };
+          if (st.src === 'sample' && fmt(st.kind).ai) { const X0 = JSON.parse(JSON.stringify(SAMPLE_AI_SETUP)); extra.tags = X0.tags; extra.ai = X0.ai; if (!fmt(st.kind).eps) extra.shots = X0.shots; }
           if (st.cover) { try { extra.cover = await uploadCover(p.id, st.cover); } catch (e) { /* vignette ignorée */ } }
           await api('/api/projects/' + p.id, { method: 'PUT', body: extra });
           close(); nav(`#/p/${p.id}` + (fmt(st.kind).ai && !fmt(st.kind).eps ? '/ai' : ''));

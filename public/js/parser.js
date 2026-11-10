@@ -581,3 +581,69 @@ Allume les rues, rallume ma vie
 Avec : Amina
 (Le soleil se lève. Elle sourit à la caméra. Noir.)
 `;
+
+// Exemple pour les formats IA : publicité de parfum (marque fictive), avec des mentions « @ »
+export const SAMPLE_AI = `ZAHRA — eau de parfum
+Publicité générée avec l'IA · 45 secondes
+
+1. EXT. DÉSERT DE TOZEUR - DUNES - AUBE
+
+Le vent soulève le sable. @LINA (25 ans), dans une longue @[robe safran], marche pieds nus vers le soleil levant. Elle tient un @[flacon de verre ambré]. Des @[grains de sable] s'élèvent en spirale autour d'elle.
+
+LINA (V.O.)
+Il y a des parfums qui se souviennent de nous.
+
+2. INT. ATELIER DE PARFUMEUR - MÉDINA - JOUR
+
+Lumière dorée à travers un moucharabieh. Des dizaines de @fioles sur une étagère en bois. @SALMA (60 ans), la parfumeuse, foulard indigo, verse une goutte d'essence de @[fleur d'oranger] dans le flacon.
+
+SALMA
+Chaque goutte garde un lieu.
+
+3. EXT. JARDIN DE FLEURS D'ORANGER - JOUR
+
+Ralenti. Des pétales blancs tombent comme une pluie. Lina tourne sur elle-même, la @[robe safran] s'ouvre en corolle. Des @abeilles dansent dans la lumière.
+
+4. INT. ATELIER DE PARFUMEUR - MÉDINA - JOUR
+
+Très gros plan : le @[flacon de verre ambré] se remplit, la lumière traverse le liquide. Le visage de Lina se reflète dans le verre.
+
+5. EXT. TOITS DE LA MÉDINA - CRÉPUSCULE
+
+Lina sur la terrasse, le ciel devient rose. Elle ouvre le flacon. Une @[brume dorée] s'échappe et dessine dans l'air les dunes du début.
+
+LINA (V.O.)
+Zahra. L'Orient en une goutte.
+
+6. INT. STUDIO - FOND NOIR - NUIT
+
+Plan produit. Le flacon tourne lentement sur un socle de @[sable noir]. Le nom ZAHRA apparaît en lettres d'or.
+
+LINA (V.O.)
+Zahra, eau de parfum.
+`;
+const sid = n => 'z' + n;
+export const SAMPLE_AI_SETUP = {
+  tags: { 'lina': 'ch', 'salma': 'ch', 'robe safran': 'cos', 'flacon de verre ambré': 'acc', 'grains de sable': 'sfx', 'fioles': 'acc', "fleur d'oranger": 'acc', 'abeilles': 'ani', 'brume dorée': 'sfx', 'sable noir': 'acc' },
+  ai: {
+    style: { ratio: '16:9', light: 'golden hour, warm backlight, soft haze', palette: 'saffron, amber gold, indigo, desert sand', neg: 'blurry, distorted faces, extra fingers, text, watermark, logo' },
+    skills: [
+      { id: 'pubstudio', name: 'Pub produit studio', text: 'premium commercial look, clean studio lighting, glossy reflections, product hero framing, high-end advertising photography', on: true },
+      { id: 'cine35', name: 'Cinéma 35 mm', text: 'cinematic film still, shot on 35mm film, anamorphic lens, natural film grain, shallow depth of field, motivated lighting', on: true }
+    ],
+    chars: {
+      LINA: { token: '@lina', look: '25-year-old Tunisian woman, long dark wavy hair, warm olive skin, almond-shaped brown eyes, natural makeup', outfit: 'flowing saffron silk dress, barefoot, thin gold bracelet', voice: 'soft, warm, intimate whisper, French with a light Arabic accent' },
+      SALMA: { token: '@salma', look: '60-year-old Tunisian woman, silver hair in a low bun, deep laugh lines, kind dark eyes', outfit: 'indigo headscarf, linen artisan apron, brass rings', voice: 'calm, low, wise' }
+    },
+    shots: {}
+  },
+  shots: {
+    '1': [{ id: sid(1), size: 'Plan d’ensemble', angle: 'Face', move: 'Drone', lens: '24mm', desc: 'Lina walks barefoot on the dunes toward the rising sun, sand swirling around her', sound: 'wind', dur: '5' },
+          { id: sid(2), size: 'Insert', angle: 'Profil', move: 'Travelling latéral', lens: '85mm', desc: 'the amber glass bottle in her hand, sand grains rising in a spiral', sound: '', dur: '3' }],
+    '2': [{ id: sid(3), size: 'Plan moyen', angle: 'Trois-quarts', move: 'Travelling avant', lens: '35mm', desc: 'Salma pours one drop of orange blossom essence into the bottle, golden light through a mashrabiya', sound: 'drop', dur: '5' }],
+    '3': [{ id: sid(4), size: 'Plan large', angle: 'Contre-plongée', move: 'Steadicam', lens: '35mm', desc: 'slow motion, Lina spins, the saffron dress opens like a flower, white petals falling', sound: 'music swells', dur: '5' }],
+    '4': [{ id: sid(5), size: 'Très gros plan', angle: 'Face', move: 'Fixe', lens: '100mm macro', desc: 'the amber bottle fills, light passes through the liquid, Lina’s face reflected in the glass', sound: '', dur: '4' }],
+    '5': [{ id: sid(6), size: 'Plan rapproché', angle: 'Profil', move: 'Panoramique', lens: '50mm', desc: 'on a rooftop at dusk Lina opens the bottle, a golden mist draws the dunes in the air', sound: '', dur: '5' }],
+    '6': [{ id: sid(7), size: 'Gros plan', angle: 'Face', move: 'Travelling avant', lens: '100mm macro', desc: 'product shot, the bottle turns slowly on a base of black sand, black background, gold rim light', sound: 'music hit', dur: '4' }]
+  }
+};
