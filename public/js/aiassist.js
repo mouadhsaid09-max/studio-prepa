@@ -3,6 +3,7 @@
 // Données : project.ai.chat (derniers échanges) et project.ai.notes (notes gardées).
 import { esc } from './parser.js';
 import { tr } from './i18n.js';
+import { lessonsBlock, renderLearn, learn, removeLesson } from './ailearn.js';
 
 export const ACTIONS = [
   ['enhance', 'Améliorer tous les prompts'],
@@ -32,13 +33,13 @@ STYLE : format ${(a.style || {}).ratio || '16:9'}${(a.style || {}).light ? ', lu
 PERSONNAGES :
 ${chars || '(aucun)'}
 PLANS :
-${shots || '(aucun)'}`;
+${shots || '(aucun)'}${lessonsBlock(project, list)}`;
 }
 
 // Rendu simple : échappement, gras **…**, listes, retours à la ligne
 const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').split('\n').map(l => /^\s*[-•*] /.test(l) ? `<span class="li">${l.replace(/^\s*[-•*] /, '')}</span>` : l + '<br>').join('').replace(/(<br>)+$/, '');
 
-export function renderAssist(project, busy) {
+export function renderAssist(project, busy, list = []) {
   const a = A(project);
   return `<div class="asst">
     <div class="asst-main">
@@ -48,7 +49,7 @@ export function renderAssist(project, busy) {
       <form class="asst-in" id="asstf"><textarea id="asstq" rows="2" placeholder="${tr('Écrivez votre question…')}" ${busy ? 'disabled' : ''}></textarea><button class="btn" ${busy ? 'disabled' : ''}>${tr('Envoyer')}</button></form>
       <p class="note">${tr('Gratuit. Seuls les noms, fiches et résumés des plans sont envoyés au service IA, jamais le scénario complet.')}${a.chat.length ? ` <button class="link" data-aclear>${tr('Effacer la conversation')}</button>` : ''}</p>
     </div>
-    <aside class="asst-notes"><h3>${tr('Notes')}</h3>
+    <aside class="asst-notes">${renderLearn(project, list)}<h3>${tr('Notes')}</h3>
       ${a.notes.length ? a.notes.map((n, i) => `<div class="anote"><div class="row between"><b>${esc(n.title)}</b><button class="bx" data-andel="${i}" title="${tr('Supprimer')}">✕</button></div><div class="anote-t">${md(n.text)}</div></div>`).join('') : `<p class="note">${tr('Gardez ici les réponses utiles : elles restent dans le projet.')}</p>`}
     </aside>
   </div>`;
@@ -57,7 +58,7 @@ export function renderAssist(project, busy) {
 // Amélioration d'un prompt de plan : renvoie { image, motion }
 export async function enhanceShot(ask, project, P, list, shot, parseJSON) {
   const msg = [{ role: 'system', content: context(project, P, list) },
-    { role: 'user', content: `Améliore les prompts de ce plan pour un générateur d’images et de vidéo. Garde les personnages identiques (jetons et descriptions), précise la composition, la lumière, l’objectif et le mouvement. Réponds uniquement en JSON : {"image": "...", "motion": "..."} (en anglais).
+    { role: 'user', content: `Améliore les prompts de ce plan pour un générateur d’images et de vidéo. Garde les personnages identiques (jetons et descriptions), précise la composition, la lumière, l’objectif et le mouvement. Applique les règles de « ce qui marche » et inspire-toi des exemples qui ont donné de bons résultats. Réponds uniquement en JSON : {"image": "...", "motion": "..."} (en anglais).
 PLAN ${shot.label} — ${shot.s.ie} ${shot.s.timeL} — ${shot.s.decor}
 IMAGE ACTUEL : ${shot.image}
 MOUVEMENT ACTUEL : ${shot.motion}` }];
@@ -95,6 +96,15 @@ export function bindAssist(root, o) {
     c.push({ role: 'assistant', content: ok ? `${ok} ${tr('prompts améliorés. Retrouvez-les dans « Prompts des plans » : « Rétablir l’automatique » annule un plan.')}` : '⚠ ' + tr('Service IA indisponible.') });
     busy = false; o.save(); o.refresh(false); scroll();
   };
+  const study = async () => {
+    const c = a().chat; c.push({ role: 'user', content: '✦ ' + tr('Étudier mes résultats') });
+    busy = true; o.refresh(true); scroll();
+    try {
+      const r = await learn(o.ask, o.parseJSON, o.project, o.list(), context(o.project, o.P, o.list()));
+      c.push({ role: 'assistant', content: `${r.feedback}\n\n**${tr('Règles appliquées à vos prochains prompts')}**\n${r.lessons.map(l => '- ' + l).join('\n')}` });
+    } catch (e) { c.push({ role: 'assistant', content: '⚠ ' + (e.message || tr('Service IA indisponible.')) }); }
+    busy = false; o.save(); o.refresh(false); scroll();
+  };
   root.addEventListener('submit', e => { if (e.target.id !== 'asstf') return; e.preventDefault(); const q = root.querySelector('#asstq'); const t = q.value; q.value = ''; send(t); });
   root.addEventListener('keydown', e => { if (e.target.id === 'asstq' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); root.querySelector('#asstf').requestSubmit(); } });
   root.addEventListener('click', e => {
@@ -103,6 +113,8 @@ export function bindAssist(root, o) {
     if (b.dataset.anote != null) { const m = a().chat[+b.dataset.anote], q = a().chat[+b.dataset.anote - 1]; if (m) { a().notes.unshift({ title: (q ? q.content : tr('Note')).replace(/^✦ /, '').slice(0, 60), text: m.content, at: Date.now() }); o.save(); o.refresh(false); o.toast(tr('Note gardée')); } return; }
     if (b.dataset.acopy != null) { const m = a().chat[+b.dataset.acopy]; if (m) o.copy(m.content); return; }
     if (b.dataset.andel != null) { a().notes.splice(+b.dataset.andel, 1); o.save(); return o.refresh(false); }
+    if (b.hasAttribute('data-alearn')) { if (busy) return; return study(); }
+    if (b.dataset.alndel != null) { removeLesson(o.project, +b.dataset.alndel); o.save(); return o.refresh(false); }
     if (b.hasAttribute('data-aclear')) { a().chat = []; o.save(); return o.refresh(false); }
   });
   return { busy: () => busy, scroll };

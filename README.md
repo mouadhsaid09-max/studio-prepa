@@ -113,3 +113,7 @@ Assistant gratuit : il améliore les prompts (un plan ou tous), écrit des notes
 - En ligne, il passe par `api/assist.js` (IA texte gratuite Pollinations, protégée par le code d'accès, 20 demandes par minute). Variable Vercel facultative **POLLINATIONS_KEY** (clé gratuite sur enter.pollinations.ai) pour lever les limites.
 - Seuls les noms, fiches et résumés des plans sont envoyés, jamais le scénario complet.
 - Vérification : `/api/assist?ping=1`.
+
+## L'assistant apprend de vos résultats
+Dans « Prompts des plans », chaque plan se note **👍 Bon résultat** ou **👎 À refaire** (avec une raison). Un plan « Validé » en post-production compte comme un bon résultat.
+Dans l'onglet Assistant, **Étudier mes résultats** compare les bons et les mauvais prompts, donne un retour, et garde 3 à 6 règles. Ces règles et les meilleurs exemples sont ensuite utilisés pour améliorer tous les autres prompts (un plan ou tous). Les règles sont aussi gardées dans le navigateur pour les projets suivants.

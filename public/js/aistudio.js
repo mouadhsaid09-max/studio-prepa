@@ -6,6 +6,7 @@ import { tr } from './i18n.js';
 import { icon } from './icons.js';
 import { renderAIPost, onAIPostChange } from './aipost.js';
 import { renderAssist, bindAssist, enhanceShot } from './aiassist.js';
+import { renderRate, rate, setNote } from './ailearn.js';
 let ASSIST_BUSY = false;
 
 const EN = {
@@ -79,7 +80,7 @@ export function renderAIStudio(project, P, sub = 'chars') {
       <div class="ais-skills">${a.skills.map((s, i) => `<div class="ais-skill ${s.on ? 'on' : ''}"><label class="sw-t"><input type="checkbox" data-aisk="${i}|on" ${s.on ? 'checked' : ''}><i></i></label><div class="ais-sk"><input class="ais-skn" data-aisk="${i}|name" value="${esc(s.name)}" placeholder="${tr('Nom')}"><textarea rows="2" data-aisk="${i}|text" placeholder="${tr('Texte du prompt (en anglais de préférence)')}">${esc(s.text || '')}</textarea></div><button class="bx" data-aiskdel="${i}">✕</button></div>`).join('')}</div>
       <div class="row wrap"><button class="btn sm ghost" data-aiskadd>+ ${tr('Nouvelle compétence')}</button>${SKILL_PRESETS.filter(p => !have.has(p.id)).map(p => `<button class="chip" data-aipre="${p.id}">+ ${esc(tr(p.name))}</button>`).join('')}</div>`;
   } else if (sub === 'help') {
-    body = renderAssist(project, ASSIST_BUSY);
+    body = renderAssist(project, ASSIST_BUSY, shotPrompts(project, P));
   } else if (sub === 'post') {
     body = renderAIPost(a, shotPrompts(project, P));
   } else {
@@ -89,7 +90,7 @@ export function renderAIStudio(project, P, sub = 'chars') {
         <div class="ais-pr"><div class="ais-th">${p.x.img ? `<img src="${esc(p.x.img)}" alt="">` : p.x.id !== '_' ? `<button class="sbp-empty" data-dsketch="${esc(p.s.k)}|${esc(p.x.id)}">✎ ${tr('Croquis')}</button>` : `<button class="sbp-empty" data-dai="${esc(p.s.k)}">✦ ${tr('Découper la scène')}</button>`}</div>
         <label class="fl">${tr('Prompt image')}<textarea rows="5" data-aip="${esc(p.key)}|image" dir="ltr">${esc(p.image)}</textarea></label>
         <label class="fl">${tr('Prompt mouvement (vidéo)')}<textarea rows="5" data-aip="${esc(p.key)}|motion" dir="ltr">${esc(p.motion)}</textarea></label>
-        <div class="ais-act"><button class="link ai" data-aienh="${esc(p.key)}">✦ ${tr('Améliorer avec l’assistant')}</button><button class="link" data-aicopy="${esc(p.image)}">${tr('Copier l’image')}</button><button class="link" data-aicopy="${esc(p.motion)}">${tr('Copier le mouvement')}</button></div></div></article>`).join('') : `<p class="note">${tr('Pas encore de scènes.')}</p>`}`;
+        <div class="ais-act"><button class="link ai" data-aienh="${esc(p.key)}">✦ ${tr('Améliorer avec l’assistant')}</button><button class="link" data-aicopy="${esc(p.image)}">${tr('Copier l’image')}</button><button class="link" data-aicopy="${esc(p.motion)}">${tr('Copier le mouvement')}</button></div>${renderRate(project, p)}</div></article>`).join('') : `<p class="note">${tr('Pas encore de scènes.')}</p>`}`;
   }
   return `<div class="ais"><header class="ais-hero"><div><span class="ais-kick">✦ ${tr('Studio IA')}</span><h2>${tr('Personnages, prompts et style')}</h2><p>${tr('Gardez les mêmes visages, le même style et les mêmes réglages d’un plan à l’autre, puis copiez les prompts dans votre générateur d’images ou de vidéo.')}</p></div></header>
     <nav class="ais-tabs">${tabs.map(([k, l, ic]) => `<button data-aisub="${k}" class="${k === sub ? 'on' : ''}">${icon(ic, 26)}<span>${tr(l)}</span></button>`).join('')}</nav>
@@ -108,6 +109,11 @@ export function bindAIStudio(root, o) {
     if (t.hasAttribute('data-aiskadd')) { a.skills.push({ id: 's' + Date.now().toString(36), name: '', text: '', on: true }); o.save(); return o.refresh(); }
     if (t.dataset.aipre) { const p = SKILL_PRESETS.find(x => x.id === t.dataset.aipre); if (p) { a.skills.push({ ...p, name: tr(p.name), on: true }); o.save(); o.refresh(); } return; }
     if (t.dataset.aiskdel != null) { a.skills.splice(+t.dataset.aiskdel, 1); o.save(); return o.refresh(); }
+    if (t.dataset.arate) {
+      const j = t.dataset.arate.lastIndexOf('|'), key = t.dataset.arate.slice(0, j), r = +t.dataset.arate.slice(j + 1);
+      const shot = shotPrompts(o.project, o.P).find(x => x.key === key); if (!shot) return;
+      rate(o.project, shot, r); o.save(); return o.refresh();
+    }
     if (t.dataset.aienh) {
       if (!o.ask) return;
       const shot = shotPrompts(o.project, o.P).find(x => x.key === t.dataset.aienh); if (!shot) return;
@@ -140,6 +146,7 @@ export function bindAIStudio(root, o) {
   });
   root.addEventListener('change', e => {
     const d = e.target.dataset;
+    if (d.arnote) { setNote(o.project, d.arnote, e.target.value); o.save(); return; }
     const pc = onAIPostChange(a, e); if (pc !== null) { o.save(); if (pc) o.refresh(); return; }
     if (d.aic) { const [n, f] = d.aic.split('|'); (a.chars[n] ||= {})[f] = e.target.value; o.save(); o.refresh(); }
     if (d.ais) { a.style[d.ais] = e.target.value; o.save(); }
