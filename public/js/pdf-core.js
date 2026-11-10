@@ -5,15 +5,16 @@ import { tr, LOCALES } from './i18n.js';
 import { computeBudget, CURRENCIES, money } from './budget.js';
 import { shotPrompts } from './aistudio.js';
 import { STAGES, POST_GROUPS, postOf, postStats } from './aipost.js';
-import { isAI } from './formats.js';
+import { isAI, isPub } from './formats.js';
+import { BRIEF_FIELDS, DATES as BR_DATES, APPROVALS as BR_OK } from './commercial.js';
 
 const W = 960, H = 540, M = 44, TOP = 96, BOTTOM = H - 40;
 const C = { ink: '#1d1d1f', mute: '#6e6e73', line: '#dcdce1', soft: '#f5f5f7', accent: '#ff9f0a', board: '#eef0f3', ij: '#f4f1ea', ej: '#f3dd6b', in: '#93b5ea', en: '#9dd39a' };
 const EFFECT = { ij: 'INT JOUR', ej: 'EXT JOUR', in: 'INT NUIT', en: 'EXT NUIT' };
 export const SECTIONS = [
-  ['cover', 'Couverture'], ['film', 'Le film'], ['chars', 'Personnages'], ['places', 'Lieux'], ['objects', 'Objets'], ['canvas', 'Vue d’ensemble du canvas'], ['mood', 'Moodboards par scène'], ['notes', 'Notes et mind maps'],
+  ['ppm', 'Brief et PPM'], ['cover', 'Couverture'], ['film', 'Le film'], ['chars', 'Personnages'], ['places', 'Lieux'], ['objects', 'Objets'], ['canvas', 'Vue d’ensemble du canvas'], ['mood', 'Moodboards par scène'], ['notes', 'Notes et mind maps'],
   ['palette', 'Palette de couleurs'], ['dep', 'Dépouillement'], ['art', 'Liste artistique'], ['pdt', 'Plan de travail'],
-  ['dec', 'Découpage technique'], ['story', 'Storyboard des plans'], ['strip', 'Stripboard'], ['fds', 'Feuilles de service'], ['bud', 'Budget'], ['post', 'Post-production IA']
+  ['dec', 'Découpage technique'], ['story', 'Storyboard des plans'], ['strip', 'Stripboard'], ['pdtc', 'Plan de travail classique'], ['fds', 'Feuilles de service'], ['bud', 'Budget'], ['post', 'Post-production IA']
 ];
 
 export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, project, sections) {
@@ -168,6 +169,38 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
     doc.font('R').fontSize(8).fillColor('#6e6e73').text(T('Généré le') + ' ' + new Date().toLocaleDateString(LOCALES[lang], { day: 'numeric', month: 'long', year: 'numeric' }) + ' · GOSET.ai', tx + 10, H - 44);
   }
 
+  // ---------- Publicité : brief et PPM ----------
+  if (want.has('ppm') && isPub(project) && project.brief) {
+    const b = project.brief, spots = Array.isArray(project.episodes) && project.episodes.length ? project.episodes : null;
+    const f = new Flow(T('Brief et PPM'), T('Publicité'));
+    const cw = (W - 2 * M - 30) / 2;
+    let col = 0, ys = [f.y, f.y];
+    BRIEF_FIELDS.forEach(([title, fields]) => {
+      const rows = fields.filter(([k]) => (b[k] || '').trim()); if (!rows.length) return;
+      const x = M + col * (cw + 30); let y = ys[col];
+      let need = 20; rows.forEach(([k]) => { doc.font('R').fontSize(9); need += 12 + doc.heightOfString(b[k], { width: cw }); });
+      if (y + need > BOTTOM) { if (ys[1 - col] + need <= BOTTOM) { col = 1 - col; } }
+      const x2 = M + col * (cw + 30); y = ys[col];
+      doc.font('T').fontSize(12).fillColor(C.ink).text(T(title), x2, y, { width: cw }); y += 18;
+      rows.forEach(([k, l]) => { doc.font('B').fontSize(7.5).fillColor(C.mute).text(T(l).toUpperCase(), x2, y, { width: cw, characterSpacing: .5 }); y = doc.y + 1; doc.font('R').fontSize(9).fillColor(C.ink).text(b[k], x2, y, { width: cw }); y = doc.y + 6; });
+      ys[col] = y + 10; col = ys[0] <= ys[1] ? 0 : 1;
+    });
+    const dl = (b.deliverables || []);
+    if (dl.length) {
+      const sn = id => { if (!spots) return T('Spot principal'); const i = spots.findIndex(x => x.id === id); return i >= 0 ? `${i + 1}. ${spots[i].name}` : T('Toute la campagne'); };
+      table(new Flow(T('Livrables'), T('Publicité')), [{ h: T('Spot'), w: 22, v: d => sn(d.spot), b: 1 }, { h: T('Durée'), w: 8, v: d => d.dur + '″' }, { h: T('Format'), w: 9, v: d => d.ratio }, { h: T('Diffusion'), w: 15, v: d => T(d.media) }, { h: T('Langue'), w: 9, v: d => d.lang }, { h: T('Sous-titres'), w: 10, v: d => d.subs ? '✓' : '—' }, { h: T('À livrer le'), w: 12, v: d => d.due ? fdate(new Date(d.due + 'T12:00:00')) : '—' }], dl, { size: 9 });
+    }
+    const dates = BR_DATES.filter(([k]) => (b.dates || {})[k]);
+    if (dates.length || BR_OK.some(([k]) => (b.ok || {})[k])) {
+      const g = new Flow(T('Planning et validations'), T('Publicité'));
+      let y = g.y; doc.font('T').fontSize(12).fillColor(C.ink).text(T('Planning de la campagne'), M, y); y += 20;
+      dates.forEach(([k, l]) => { doc.font('R').fontSize(9.5).fillColor(C.mute).text(T(l), M, y, { width: 220 }); doc.font('B').fillColor(C.ink).text(fdate(new Date(b.dates[k] + 'T12:00:00')), M + 230, y, { width: 150 }); y += 17; });
+      let y2 = g.y, x2 = M + cw + 30; doc.font('T').fontSize(12).fillColor(C.ink).text(T('Validations client'), x2, y2); y2 += 20;
+      BR_OK.forEach(([k, l]) => { const on = !!(b.ok || {})[k]; doc.roundedRect(x2, y2 + 1, 10, 10, 2).lineWidth(1).strokeColor(on ? '#1f8a3b' : '#c7c7cc').stroke(); if (on) doc.moveTo(x2 + 2, y2 + 6).lineTo(x2 + 4.5, y2 + 9).lineTo(x2 + 9, y2 + 3).strokeColor('#1f8a3b').stroke(); doc.font('R').fontSize(9.5).fillColor(on ? C.ink : C.mute).text(T(l) + (on && typeof b.ok[k] === 'string' ? '  ·  ' + fdate(new Date(b.ok[k])) : ''), x2 + 18, y2, { width: cw - 18 }); y2 += 17; });
+      y = Math.max(y, y2) + 30;
+      if (y < BOTTOM - 60) { doc.font('B').fontSize(8).fillColor(C.mute).text(T('SIGNATURE CLIENT').toUpperCase(), M, y, { characterSpacing: 1 }); doc.text(T('SIGNATURE AGENCE').toUpperCase(), M + cw + 30, y, { characterSpacing: 1 }); doc.roundedRect(M, y + 14, cw, 50, 6).dash(3, { space: 3 }).lineWidth(.7).strokeColor('#c7c7cc').stroke(); doc.roundedRect(M + cw + 30, y + 14, cw, 50, 6).stroke().undash(); }
+    }
+  }
   // ---------- Le film ----------
   const F = BB.film;
   if (want.has('film') && (P.series || F.logline || F.synopsis || F.style || F.genres.length || F.format || F.duree || F.ratio)) {
@@ -376,6 +409,72 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
       { h: 'Rôles', w: 19, v: d => d.roles.map(r => r.name + (d.conflicts.includes(r.name) ? ' (indispo.)' : '')).join(', ') }, { h: 'Notes', w: 14, v: d => edits['pdt.' + d.n + '.note'] ?? (d.moves ? d.moves + ' déplacement(s)' : '') }
     ], P.days);
   }
+  // ---------- Plan de travail classique : bandes verticales, format A3 paysage (modèle AFAR) ----------
+  const classicPages = new Set();
+  if (want.has('pdtc') && P.days.length) {
+    const PW = 1190.55, PH = 841.89, m = 22, HB = 250, TOPH = 300, BOT = 54;
+    const SC = { ij: '#ffffff', ej: '#ffe680', in: '#a8c8fb', en: '#a6e3a8' };
+    const roles = P.roles.slice(0, 40);
+    const EL = [['fig', 'Figuration'], ['cos', 'Costumes'], ['hmc', 'HMC'], ['acc', 'Accessoires'], ['veh', 'Véhicules'], ['ani', 'Animaux'], ['casc', 'Cascades'], ['sfx', 'Effets'], ['son', 'Son']];
+    const elv = (sc, k) => (edits['bd.' + sc.k + '.' + k] ?? (sc.det[k] || '')).trim();
+    const rowsTop = m + TOPH, rowsH = PH - m - BOT - rowsTop, rh = Math.min(16, rowsH / Math.max(1, roles.length + EL.length + 1)), elTop = rowsTop + (roles.length + 1) * rh;
+    const cols = []; P.days.forEach(d => { d.sc.forEach(sc => cols.push({ sc })); cols.push({ day: d }); });
+    const SW = 19, BW = 16;
+    const header = () => {
+      doc.addPage({ size: [PW, PH], margin: 0 }); classicPages.add(doc.bufferedPageRange().start + doc.bufferedPageRange().count - 1);
+      doc.rect(0, 0, PW, PH).fill('#ffffff');
+      doc.rect(m, m, PW - 2 * m, PH - 2 * m).lineWidth(1.4).strokeColor('#1f3a8a').stroke();
+      // bloc titre
+      doc.rect(m, m, HB, TOPH).lineWidth(.8).strokeColor('#1f3a8a').stroke();
+      let y = m + 14;
+      doc.font('B').fontSize(8).fillColor('#555').text(T('PLAN DE TRAVAIL'), m + 10, y, { width: HB - 20, align: 'center', characterSpacing: 1.5 }); y += 16;
+      doc.font('T').fontSize(18).fillColor('#c4271c').text(project.name.toUpperCase(), m + 10, y, { width: HB - 20, align: 'center' }); y = doc.y + 8;
+      const info = [[T('Production'), set.prod], [T('Réalisation'), set.real], [T('Début'), fdate(P.days[0].date)], [T('Fin'), fdate(P.days[P.days.length - 1].date)], [T('Jours de tournage'), String(P.days.length)], [T('Séquences'), String(P.scenes.length)], [T('Pages'), fmtE(P.scenes.reduce((a, x) => a + x.e, 0))], [T('Édité le'), fdate(new Date())]].filter(r => r[1]);
+      info.forEach(([k, v]) => { doc.font('R').fontSize(8).fillColor('#666').text(k, m + 14, y, { width: 100 }); doc.font('B').fontSize(8.5).fillColor('#111').text(v, m + 110, y - .5, { width: HB - 124 }); y += 14; });
+      // légende des couleurs
+      y = m + TOPH - 30; [['ij', 'INT JOUR'], ['ej', 'EXT JOUR'], ['in', 'INT NUIT'], ['en', 'EXT NUIT']].forEach(([k, l], i) => { const x = m + 12 + i * 58; doc.rect(x, y, 10, 10).fillAndStroke(SC[k], '#999'); doc.font('R').fontSize(6.5).fillColor('#333').text(T(l), x + 13, y + 2, { width: 46, lineBreak: false }); });
+      // lignes des rôles
+      doc.font('B').fontSize(7).fillColor('#1f3a8a').text(T('RÔLES'), m + 8, rowsTop - 12, { characterSpacing: 1 });
+      roles.forEach((r, i) => {
+        const yy = rowsTop + i * rh; if (i % 2) doc.rect(m, yy, PW - 2 * m, rh).fill('#f5f7fc');
+        doc.font('B').fontSize(Math.min(8, rh - 4)).fillColor('#111').text(`${r.id}.`, m + 6, yy + (rh - 8) / 2 + .5, { width: 18, align: 'right', lineBreak: false });
+        doc.font('R').text(r.name, m + 28, yy + (rh - 8) / 2 + .5, { width: HB - 36, lineBreak: false, ellipsis: true });
+      });
+      doc.font('B').fontSize(7).fillColor('#1f3a8a').text(T('ÉLÉMENTS'), m + 8, elTop - rh + (rh - 7) / 2, { characterSpacing: 1 });
+      EL.forEach(([k, l], i) => { const yy = elTop + i * rh; if (i % 2) doc.rect(m, yy, PW - 2 * m, rh).fill('#f7f5ee'); doc.font('R').fontSize(Math.min(8, rh - 4)).fillColor('#333').text(T(l), m + 28, yy + (rh - 8) / 2 + .5, { width: HB - 36, lineBreak: false }); });
+      doc.moveTo(m, elTop - rh).lineTo(PW - m, elTop - rh).lineWidth(.5).strokeColor('#b9c2dd').stroke();
+      doc.moveTo(m, rowsTop).lineTo(PW - m, rowsTop).lineWidth(.8).strokeColor('#1f3a8a').stroke();
+      doc.moveTo(m, PH - m - BOT).lineTo(PW - m, PH - m - BOT).stroke();
+      doc.moveTo(m + HB, m).lineTo(m + HB, PH - m).stroke();
+      doc.font('B').fontSize(7).fillColor('#1f3a8a').text(T('PAGES'), m + 8, PH - m - BOT + 8, { characterSpacing: 1 }); doc.text(T('TEMPS ESTIMÉ'), m + 8, PH - m - BOT + 30, { characterSpacing: 1 });
+      return m + HB;
+    };
+    let x = header(), pageNo = 1;
+    const vtext = (str, cx, top, len, size, font = 'R', color = '#111') => {
+      doc.save(); doc.translate(cx, top + len); doc.rotate(-90); doc.font(font).fontSize(size).fillColor(color).text(String(str), 0, -size / 2 - 1, { width: len, lineBreak: false, ellipsis: true }); doc.restore();
+    };
+    cols.forEach(c => {
+      const w = c.day ? BW : SW;
+      if (x + w > PW - m) { x = header(); pageNo++; }
+      if (c.day) {
+        doc.rect(x, m, w, PH - 2 * m).fill('#1f3a8a');
+        vtext(`${T('FIN DU JOUR')} ${c.day.n}  ·  ${fdate(c.day.date)}  ·  ${c.day.sc.length} ${T('séq.')}  ·  ${fmtE(c.day.e)} p.  ·  ${fmtMin(c.day.min)}`, x + w / 2, m + 6, PH - 2 * m - 12, 7.5, 'B', '#ffffff');
+      } else {
+        const sc = c.sc, k = cls(sc);
+        doc.rect(x, m, w, PH - 2 * m).fill(SC[k] || '#fff');
+        doc.rect(x, m, w, PH - 2 * m).lineWidth(.4).strokeColor('#8a94b8').stroke();
+        // en-tête de bande : numéro, effet, décor, résumé (texte vertical)
+        doc.font('B').fontSize(8).fillColor('#111').text(String(sc.num), x, m + 4, { width: w, align: 'center', lineBreak: false });
+        vtext(`${sc.ie} ${T(sc.timeL)}  —  ${sc.decor}`, x + w / 2 - 4, m + 18, TOPH - 24, 6.6, 'B');
+        vtext(sc.summary || '', x + w / 2 + 4.5, m + 18, TOPH - 24, 6, 'R', '#333');
+        EL.forEach(([k], i) => { if (elv(sc, k)) { const yy = elTop + i * rh; doc.circle(x + w / 2, yy + rh / 2, Math.min(3, rh / 4)).fill('#111'); } });
+        roles.forEach((r, i) => { if (sc.roles.includes(r)) { const yy = rowsTop + i * rh; doc.font('B').fontSize(Math.min(7.5, rh - 4)).fillColor('#111').text(String(r.id), x, yy + (rh - 7.5) / 2 + .5, { width: w, align: 'center', lineBreak: false }); } });
+        vtext(fmtE(sc.e), x + w / 2, PH - m - BOT + 4, 20, 6.5, 'B');
+        vtext(fmtMin(sc.est), x + w / 2, PH - m - BOT + 27, 24, 6, 'R', '#333');
+      }
+      x += w;
+    });
+  }
   // ---------- Découpage technique ----------
   const SH = project.shots || {};
   const withShots = P.scenes.filter(sc => (SH[sc.k] || []).length);
@@ -509,6 +608,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
   for (let i = range.start; i < range.start + range.count; i++) {
     if (i === 0 && pages.cover) continue;
     doc.switchToPage(i);
+    if (classicPages.has(i)) { doc.font('R').fontSize(7).fillColor('#666'); doc.text(`${project.name} · ${i + 1} / ${range.count}`, 22, doc.page.height - 16, { width: 400, lineBreak: false }); continue; }
     doc.font('R').fontSize(8).fillColor(C.mute);
     doc.text(project.name, M, H - 26, { width: 400, lineBreak: false, ellipsis: true });
     doc.text(`${i + 1} / ${range.count}`, W - M - 100, H - 26, { width: 100, align: 'right', lineBreak: false });

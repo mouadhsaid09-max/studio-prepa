@@ -1,5 +1,5 @@
 // Onglets de production : dépouillement, liste artistique, plan de travail, feuilles de service
-import { esc, fmtE, fdate, fdateL, hm, cls, callSheet, CREW, COLS_ALL, bibKey, fmtMin, unavail, isUnavail, DEFAULT_SETTINGS, LIGHT_ORDER, SHOT, shotLabel } from './parser.js';
+import { esc, fmtE, fdate, fdateL, hm, cls, callSheet, CREW, COLS_ALL, bibKey, fmtMin, unavail, isUnavail, DEFAULT_SETTINGS, LIGHT_ORDER, SHOT, shotLabel, offDays, extraOff, isOff, dayLength, dayCapacity } from './parser.js';
 
 export const COLS = COLS_ALL;
 export const legend = `<div class="legend"><span><i class="sw ij"></i>INT JOUR</span><span><i class="sw ej"></i>EXT JOUR</span><span><i class="sw in"></i>INT NUIT</span><span><i class="sw en"></i>EXT NUIT</span></div>`;
@@ -19,7 +19,7 @@ export function renderDep(P, project, epf) {
   const ed = makeEd(project);
   const list = P.series && epf ? P.scenes.filter(x => x.epId === epf) : P.scenes;
   const epBar = P.series ? `<div class="pills epf"><button class="pill ${epf ? '' : 'on'}" data-epf="">Tous les épisodes</button>${P.episodes.map(e => `<button class="pill ${epf === e.id ? 'on' : ''}" data-epf="${e.id}">${e.n}. ${esc(e.name)}</button>`).join('')}</div>` : '';
-  return `<div class="panel"><div class="row between"><h2>Dépouillement</h2>${tools('tDep')}</div>
+  return `<div class="panel"><div class="row between"><h2>Dépouillement</h2><div class="row"><button class="btn sm ai-grad" data-aidep>✦ Compléter avec l’IA</button>${tools('tDep')}</div></div>
   ${epBar}${legend}<p class="note">Tout est modifiable : touchez une cellule pour écrire, ou le numéro de scène pour ouvrir sa fiche (effet, moment, jour de tournage…). Les éléments pré-remplis viennent d’une détection par mots-clés : vérifiez-les. Rôles en italique = présents sans dialogue.</p>
   <div class="tw"><table id="tDep"><thead><tr>${P.series ? '<th>Ép.</th>' : ''}<th class="num">N°</th><th>Effet</th><th>Décor</th><th>Résumé</th><th>Durée</th><th>Temps</th><th>Jour</th><th>Rôles</th>${COLS.map(c => `<th>${c[1]}</th>`).join('')}</tr></thead><tbody>
   ${list.map(s => `<tr class="${cls(s)}" id="dep-${esc(s.k)}">${P.series ? `<td class="num">${s.ep}</td>` : ''}<td class="fx num"><button class="scn" data-scene="${esc(s.k)}" title="Modifier la scène">${esc(s.num)}${s.ovr ? '<i>•</i>' : ''}</button></td><td class="fx"><button class="scn t" data-scene="${esc(s.k)}">${s.ie} ${esc(s.timeL)}</button></td>${ed('ov.' + s.k + '.decor', s.decor)}${ed('ov.' + s.k + '.summary', s.summary, 'td', 'Résumé')}${ed('bd.' + s.k + '.e', fmtE(s.autoE))}${ed('est.' + s.k, String(s.est), 'td')}<td class="num"><button class="scn t" data-scene="${esc(s.k)}">J${s.day}</button></td><td>${s.roles.map(r => roleTag(r, s)).join('<br>') || '<span class="mutey">—</span>'}</td>${COLS.map(c => ed('bd.' + s.k + '.' + c[0], s.det[c[0]] || '')).join('')}</tr>`).join('')}
@@ -51,6 +51,48 @@ export function renderArt(P, project) {
   </tbody></table></div></div>`;
 }
 
+// ---------- Calendrier du tournage : dates, horaires, repos ----------
+const WD = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Jeu'], [5, 'Ven'], [6, 'Sam'], [0, 'Dim']];
+const isoD = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function calendarPanel(P, set) {
+  const off = offDays(set), xo = extraOff(set);
+  const first = P.days[0]?.date, last = P.days[P.days.length - 1]?.date;
+  const from = new Date(((set.prep && set.prep < set.start) ? set.prep : set.start) + 'T12:00:00');
+  let to = last ? new Date(last) : new Date(from); if (set.end) { const e = new Date(set.end + 'T12:00:00'); if (e > to) to = e; }
+  const cells = [], d = new Date(from); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const byDate = new Map(P.days.map(x => [isoD(x.date), x]));
+  for (let i = 0; i < 7 * 26 && (d <= to || (d.getDay() + 6) % 7); i++) {
+    const k = isoD(d), day = byDate.get(k), x = xo.find(o => k >= o.d && k <= (o.to || o.d));
+    let cl = 'c', lab = '';
+    if (day) { cl += day.night ? ' sn' : day.mixed ? ' sm' : ' sd'; lab = `J${day.n}`; }
+    else if (x) { cl += ' xo'; lab = esc(x.l || 'Repos'); }
+    else if (off.includes(d.getDay())) { cl += ' off'; lab = 'Repos'; }
+    else if (set.prep && k >= set.prep && k < set.start) { cl += ' prep'; lab = 'Prépa'; }
+    if (k === set.end) { cl += ' wrap'; lab += (lab ? ' · ' : '') + 'Fin'; }
+    if (k < isoD(from) && !day) cl += ' out';
+    cells.push(`<div class="${cl}"><b>${d.getDate()}${d.getDate() === 1 || !cells.length ? ' ' + d.toLocaleDateString('fr-FR', { month: 'short' }) : ''}</b>${lab ? `<span>${lab}</span>` : ''}</div>`);
+    d.setDate(d.getDate() + 1);
+  }
+  const avail = (() => { if (!set.end) return null; let n = 0; const c = new Date(set.start + 'T12:00:00'), e = new Date(set.end + 'T12:00:00'); while (c <= e && n < 999) { if (!isOff(set, c)) n++; c.setDate(c.getDate() + 1); } return n; })();
+  return `<div class="cal-p"><div class="row between"><h3>Calendrier du tournage</h3>${first ? `<span class="note">Du ${fdate(first)} au ${fdate(last)} · ${P.days.length} jour${P.days.length > 1 ? 's' : ''} de tournage</span>` : ''}</div>
+    <div class="grid4">
+      <label class="fl">Début de la préparation<input type="date" data-s="prep" value="${esc(set.prep || '')}"></label>
+      <label class="fl">1er jour de tournage<input type="date" data-s="start" value="${esc(set.start)}"></label>
+      <label class="fl">Fin de tournage prévue<input type="date" data-s="end" value="${esc(set.end || '')}"></label>
+      <div class="fl">Repos chaque semaine<div class="wdays">${WD.map(([n, l]) => `<label class="wd ${off.includes(n) ? 'on' : ''}"><input type="checkbox" data-off="${n}" ${off.includes(n) ? 'checked' : ''}>${l}</label>`).join('')}</div></div>
+      <label class="fl">Prêt à tourner (jour)<input type="time" data-s="pat" value="${esc(set.pat)}"></label>
+      <label class="fl">Fin de journée (jour)<input type="time" data-s="endT" value="${esc(set.endT || '')}"></label>
+      <label class="fl">Prêt à tourner (nuit)<input type="time" data-s="patN" value="${esc(set.patN)}"></label>
+      <label class="fl">Fin de journée (nuit)<input type="time" data-s="endTN" value="${esc(set.endTN || '')}"></label>
+    </div>
+    ${set.endT ? `<p class="note sm">Journée de ${Math.round(dayLength(set) / 6) / 10} h, dont 1 h de repas : ${Math.round(dayCapacity(set) / 6) / 10} h de tournage par jour.</p>` : ''}
+    <div class="xo"><div class="row between"><b>Jours de repos en plus</b><button class="btn sm ghost" data-xoadd>+ Ajouter</button></div>
+      ${xo.length ? xo.map((o, i) => `<div class="xo-r"><input type="date" data-xo="${i}|d" value="${esc(o.d)}"><span>→</span><input type="date" data-xo="${i}|to" value="${esc(o.to || '')}" title="Jusqu’au (facultatif)"><input data-xo="${i}|l" value="${esc(o.l || '')}" placeholder="Fête, voyage, intempéries…"><button class="bx" data-xodel="${i}">✕</button></div>`).join('') : '<p class="note sm">Jours fériés, voyage, repos imprévu : ils sont sautés dans le plan de travail.</p>'}</div>
+    ${avail != null ? `<div class="alert ${P.wrapLate ? '' : 'soft ok'}">${P.wrapLate ? `⚠ ${P.days.length} jours de tournage nécessaires mais seulement ${avail} jours disponibles avant la fin prévue (${fdate(new Date(set.end + 'T12:00:00'))}).` : `✓ ${P.days.length} jours nécessaires sur ${avail} jours disponibles avant la fin prévue.`}</div>` : ''}
+    <div class="cal"><div class="cal-h">${WD.map(w => `<span>${w[1]}</span>`).join('')}</div><div class="cal-g">${cells.join('')}</div></div>
+  </div>`;
+}
+
 export function renderPdt(P, project) {
   if (!P.scenes.length) return empty;
   const ed = makeEd(project), set = { ...DEFAULT_SETTINGS(), ...(project.settings || {}) };
@@ -61,16 +103,13 @@ export function renderPdt(P, project) {
   const head = (d, i) => `<div class="${i ? 'sb-item sb-break' : 'sb-head'} ${d.over ? 'over' : ''}" ${i ? 'data-break="1"' : ''}>${i ? '<span class="dh" title="Glisser la fin de journée">⠿</span>' : ''}<b>JOUR ${d.n}</b><span>${fdate(d.date)}${d.mixed ? ' · jour / nuit' : d.night ? ' · nuit' : ''}</span><span class="dm">${d.sc.length} séq. · ${fmtMin(d.min)} / ${fmtMin(P.cap)}${d.moves ? ' · ' + d.moves + ' dépl.' : ''}</span>${d.conflicts.length ? `<em class="cf">⚠ ${d.conflicts.map(esc).join(', ')}</em>` : ''}${i ? '<button class="sb-x" data-unbreak title="Fusionner avec la journée précédente">✕</button>' : ''}</div>`;
   return `<div class="panel"><div class="row between"><h2>Plan de travail</h2>${tools('tPdt')}</div>
   <div class="stats"><div class="stat"><b>${P.days.length}</b><span>Jours</span></div><div class="stat"><b>${P.scenes.length}</b><span>Séquences</span></div><div class="stat"><b>≈ ${P.quota}</b><span>Séq. / jour possibles</span></div><div class="stat"><b>${fmtMin(totMin / Math.max(1, P.days.length))}</b><span>Moy. / jour</span></div><div class="stat"><b>${fmtE(tot)}</b><span>Pages</span></div></div>
-  <details class="more-f"><summary>Réglages du calcul (journée, temps par page, dates)</summary><div class="grid4">
-    <label class="fl">1er jour<input type="date" data-s="start" value="${esc(set.start)}"></label>
-    <label class="fl">Jours / semaine<select data-s="dpw">${[5, 6, 7].map(n => `<option ${+set.dpw === n ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
-    <label class="fl">Journée de travail (h)<input type="number" min="4" max="16" step="0.5" data-s="hpd" value="${esc(set.hpd)}"></label>
+  ${calendarPanel(P, set)}
+  <details class="more-f"><summary>Réglages du calcul (temps par page, installation, déplacements)</summary><div class="grid4">
+    ${set.endT ? '' : `<label class="fl">Journée de travail (h)<input type="number" min="4" max="16" step="0.5" data-s="hpd" value="${esc(set.hpd)}"></label>`}
     <label class="fl">Minutes par page<input type="number" min="10" max="300" step="5" data-s="mpp" value="${esc(set.mpp)}"></label>
     <label class="fl">Installation par séquence (min)<input type="number" min="0" max="180" step="5" data-s="setup" value="${esc(set.setup)}"></label>
     <label class="fl">Déplacement entre décors (min)<input type="number" min="0" max="240" step="5" data-s="move" value="${esc(set.move)}"></label>
     <label class="fl">Minutes par plan (si découpage)<input type="number" min="3" max="120" step="1" data-s="shotMin" value="${esc(set.shotMin)}"></label>
-    <label class="fl">PAT jour<input type="time" data-s="pat" value="${esc(set.pat)}"></label>
-    <label class="fl">PAT nuit<input type="time" data-s="patN" value="${esc(set.patN)}"></label>
   </div><p class="note sm">Temps d’une séquence = installation + pages × minutes par page (ou nombre de plans × minutes par plan si la scène a un découpage), + 45 min si cascade, + 30 min si SFX, véhicule ou animal, + 20 min si figuration, + 15 % la nuit. Une journée compte ${fmtMin(P.cap)} de tournage (journée moins 1 h de repas). Chaque temps se corrige dans la fiche scène.</p></details>
   <p class="note">${P.manual ? '<b>Ordre manuel.</b> ' : '<b>Ordre automatique :</b> EXT jour → INT jour → INT nuit → EXT nuit, séquences d’un même décor regroupées, journées remplies selon le temps estimé. '}Glissez les bandes avec ⠿ pour changer l’ordre, glissez une « fin de journée » pour déplacer la coupure, touchez une bande pour modifier la scène.</p>
   ${conflicts.length ? `<div class="alert">⚠ ${conflicts.join('<br>⚠ ')}</div>` : ''}${over.length ? `<div class="alert soft">Journées trop chargées : ${over.join(', ')} (au-delà de ${fmtMin(P.cap)}).</div>` : ''}

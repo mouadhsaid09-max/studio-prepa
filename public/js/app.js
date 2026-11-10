@@ -8,13 +8,15 @@ import { initPrepAI, mountButton, openAI, sketchShot, askVision, genImage, askAI
 import { openInk } from './ink.js';
 import { glyph } from './glyphs.js';
 import { icon } from './icons.js';
-import { FORMATS, fmt, formatOf, isAI } from './formats.js';
+import { FORMATS, fmt, formatOf, isAI , unitWord, isPub } from './formats.js';
 import { renderAIStudio, bindAIStudio } from './aistudio.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
 import { startI18n, LANG, LANGS, LOCALES, setLang, tr } from './i18n.js';
-import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey } from './parser.js';
+import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey, offDays } from './parser.js';
 import { attachMentions, projectItems } from './mentions.js';
+import { attachHighlight, termsOf, HL } from './highlight.js';
+import { renderBrief, bindBrief } from './commercial.js';
 setDateLocale(LOCALES[LANG]);
 
 const $ = s => document.querySelector(s);
@@ -290,7 +292,7 @@ function newProject() {
     <div class="npk">${FORMATS.filter(f => !f.ai).map(card).join('')}</div>
     <div class="npg-lbl ai-l">Production IA <span>personnages, prompts, style</span></div>
     <div class="npk npk-ai">${FORMATS.filter(f => f.ai).map(card).join('')}</div>
-    <div class="npk-eps" id="neps"><span>Épisodes</span><button type="button" class="npk-st" data-ep="-1" aria-label="−">−</button><input id="nep" type="number" inputmode="numeric" min="1" max="40" value="3" aria-label="Nombre d’épisodes"><button type="button" class="npk-st" data-ep="1" aria-label="+">+</button></div>
+    <div class="npk-eps" id="neps"><span id="nepl">Épisodes</span><button type="button" class="npk-st" data-ep="-1" aria-label="−">−</button><input id="nep" type="number" inputmode="numeric" min="1" max="40" value="3" aria-label="Nombre d’épisodes"><button type="button" class="npk-st" data-ep="1" aria-label="+">+</button></div>
     <label class="npg-lbl" for="np">Titre</label>
     <input id="np" class="npg-name" placeholder="Titre du film" autocomplete="off">
     <div class="npg-lbl">Point de départ</div>
@@ -307,18 +309,22 @@ function newProject() {
       const PH = { film: 'Titre du film', series: 'Titre de la série', pub: 'Nom du spot ou de la marque', clip: 'Titre de la chanson', 'ai-pub': 'Nom du spot ou de la marque', 'ai-series': 'Titre de la mini-série' };
       const drawKind = () => {
         bg.querySelectorAll('[data-kind]').forEach(b => b.classList.toggle('on', b.dataset.kind === st.kind));
-        q('#neps').classList.toggle('show', !!fmt(st.kind).eps);
+        const F = fmt(st.kind), multi = !!(F.eps || F.spots);
+        nf.multiple = multi;
+        if (st.lastKind !== st.kind) { st.lastKind = st.kind; setEps(F.spots ? 1 : 3); }
+        q('#nepl').textContent = tr(F.spots ? 'Spots' : 'Épisodes');
+        q('#neps').classList.toggle('show', multi);
         q('#np').placeholder = tr(PH[st.kind] || PH.film); drawSrc(); if (q('#ncov')) drawCover(); slate();
       };
       const drawSrc = () => {
         const clip = st.kind === 'clip';
-        q('#nsrc').innerHTML = SRC.map(([v, ic, title, sub], i) => (clip && v === 'file' ? (title = 'Importer des paroles', sub = 'Texte ou Word, sections entre crochets') : clip && v === 'sample' ? (title = 'Exemple', sub = '« Tunis la nuit », 8 sections') : fmt(st.kind).ai && v === 'sample' ? (title = 'Exemple IA', sub = '« Zahra », pub parfum, 6 scènes et 2 personnages') : 0, true) && `<button class="npg-row ${v === st.src ? 'on' : ''}" data-src="${v}"><span class="nr">0${i + 1}</span>${icon(ic, 30)}<span class="bd"><b>${v === 'file' && st.file ? esc(st.file.name) : title}</b><span>${v === 'file' && fmt(st.kind).eps && !st.file ? 'Le fichier devient l’épisode 1' : sub}</span></span><i class="rd"></i></button>`).join('');
+        q('#nsrc').innerHTML = SRC.map(([v, ic, title, sub], i) => (clip && v === 'file' ? (title = 'Importer des paroles', sub = 'Texte ou Word, sections entre crochets') : (fmt(st.kind).eps || fmt(st.kind).spots) && v === 'file' ? (title = fmt(st.kind).spots ? 'Importer les scripts' : 'Importer les épisodes', sub = st.files && st.files.length > 1 ? `${st.files.length} fichiers : un par épisode, dans l’ordre des numéros` : 'Un ou plusieurs fichiers : chacun devient un épisode') : clip && v === 'sample' ? (title = 'Exemple', sub = '« Tunis la nuit », 8 sections') : fmt(st.kind).ai && v === 'sample' ? (title = 'Exemple IA', sub = '« Zahra », pub parfum, 6 scènes et 2 personnages') : 0, true) && `<button class="npg-row ${v === st.src ? 'on' : ''}" data-src="${v}"><span class="nr">0${i + 1}</span>${icon(ic, 30)}<span class="bd"><b>${v === 'file' && st.file ? esc(st.file.name) : title}</b><span>${v === 'file' && fmt(st.kind).eps && !st.file ? 'Le fichier devient l’épisode 1' : sub}</span></span><i class="rd"></i></button>`).join('');
       };
       const drawCover = () => { q('#ncov').innerHTML = coverHTML(st.cover, st.color, q('#np').value.trim(), st.kind); q('#ncclr').classList.toggle('hidden', !st.cover); bg.querySelectorAll('[data-col]').forEach(b => b.classList.toggle('on', b.dataset.col === st.color)); };
       const setEps = v => { st.eps = Math.max(1, Math.min(40, parseInt(v) || 1)); nep.value = st.eps; slate(); };
       drawKind(); drawCover();
       bg.querySelectorAll('.npk').forEach(g => {
-        g.addEventListener('click', e => { const k = e.target.closest('[data-kind]'); if (!k) return; st.kind = k.dataset.kind; drawKind(); if (fmt(st.kind).eps) { nep.focus(); nep.select(); } });
+        g.addEventListener('click', e => { const k = e.target.closest('[data-kind]'); if (!k) return; st.kind = k.dataset.kind; drawKind(); if (fmt(st.kind).eps || fmt(st.kind).spots) { nep.focus(); nep.select(); } });
         g.addEventListener('keydown', e => { const k = e.target.closest('.npk-o'); if (k && e.target === k && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); k.click(); } });
       });
       q('#neps').addEventListener('click', e => { const stp = e.target.closest('[data-ep]'); if (stp) setEps(st.eps + +stp.dataset.ep); });
@@ -326,7 +332,12 @@ function newProject() {
       nep.addEventListener('change', () => setEps(nep.value));
       nep.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); q('#np').focus(); } });
       q('#nsrc').addEventListener('click', e => { const b = e.target.closest('[data-src]'); if (!b) return; const again = st.src === b.dataset.src; st.src = b.dataset.src; drawSrc(); if (st.src === 'file' && (!st.file || again)) nf.click(); });
-      nf.onchange = () => { st.file = nf.files[0] || st.file; if (st.file) { const n = q('#np'); if (!n.value) n.value = st.file.name.replace(/\.[^.]+$/, ''); drawCover(); } drawSrc(); };
+      nf.onchange = () => {
+        if (nf.files.length) { st.files = [...nf.files]; st.file = st.files[0]; }
+        if (st.files && st.files.length > 1 && (fmt(st.kind).eps || fmt(st.kind).spots)) setEps(Math.max(st.eps, st.files.length));
+        if (st.file && !(st.files && st.files.length > 1)) { const n = q('#np'); if (!n.value) n.value = st.file.name.replace(/\.[^.]+$/, ''); }
+        drawCover(); drawSrc();
+      };
       q('#ncov').onclick = q('#ncpick').onclick = () => ncf.click();
       ncf.onchange = () => { const f = ncf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { st.cover = r.result; drawCover(); }; r.readAsDataURL(f); };
       q('#ncclr').onclick = () => { st.cover = null; drawCover(); };
@@ -336,16 +347,22 @@ function newProject() {
         let name = q('#np').value.trim(), script = ''; setEps(nep.value);
         try {
           if (st.src === 'sample') { if (st.kind === 'clip') { script = SAMPLE_CLIP; name ||= 'Tunis la nuit'; } else if (fmt(st.kind).ai) { script = SAMPLE_AI; name ||= 'Zahra — eau de parfum'; } else { script = SAMPLE; name ||= 'Le Dernier Train'; } }
-          if (st.src === 'file') { if (!st.file) { nf.click(); return; } q('#ok').textContent = tr('Lecture…'); script = await readFile(st.file); }
+          let many = null;
+          if (st.src === 'file') {
+            if (!st.file) { nf.click(); return; }
+            if ((fmt(st.kind).eps || fmt(st.kind).spots) && st.files && st.files.length > 1) many = await readEpisodes(st.files, (i, n) => { q('#ok').textContent = `${tr('Lecture')} ${i}/${n}…`; });
+            else { q('#ok').textContent = tr('Lecture…'); script = await readFile(st.file); }
+          }
           const body = { name: name || tr('Sans titre'), script, settings: DEFAULT_SETTINGS(), format: st.kind };
-          if (fmt(st.kind).eps) { body.episodes = [...Array(st.eps)].map((_, i) => ({ id: epId(), name: tr('Épisode ' + (i + 1)), script: i === 0 ? script : '' })); body.script = ''; }
+          const multiEp = fmt(st.kind).eps || (fmt(st.kind).spots && (st.eps > 1 || (many && many.length > 1)));
+          if (multiEp) { const n = Math.max(st.eps, many ? many.length : 0); body.episodes = [...Array(n)].map((_, i) => ({ id: epId(), name: tr((fmt(st.kind).spots ? 'Spot ' : 'Épisode ') + (i + 1)), script: many ? (many[i]?.script || '') : (i === 0 ? script : '') })); body.script = ''; }
           q('#ok').disabled = true;
           const p = (await api('/api/projects', { method: 'POST', body })).project;
           const extra = { color: st.color, format: st.kind };
-          if (st.src === 'sample' && fmt(st.kind).ai) { const X0 = JSON.parse(JSON.stringify(SAMPLE_AI_SETUP)); extra.tags = X0.tags; extra.ai = X0.ai; if (!fmt(st.kind).eps) extra.shots = X0.shots; }
+          if (st.src === 'sample' && fmt(st.kind).ai) { const X0 = JSON.parse(JSON.stringify(SAMPLE_AI_SETUP)); extra.tags = X0.tags; extra.ai = X0.ai; if (!multiEp) extra.shots = X0.shots; }
           if (st.cover) { try { extra.cover = await uploadCover(p.id, st.cover); } catch (e) { /* vignette ignorée */ } }
           await api('/api/projects/' + p.id, { method: 'PUT', body: extra });
-          close(); nav(`#/p/${p.id}` + (fmt(st.kind).ai && !fmt(st.kind).eps ? '/ai' : ''));
+          close(); nav(`#/p/${p.id}` + (fmt(st.kind).ai && !multiEp ? '/ai' : ''));
         } catch (err) { q('#nerr').textContent = err.message; q('#ok').textContent = tr('Créer le projet'); q('#ok').disabled = false; }
       };
       q('#np').onkeydown = e => { if (e.key === 'Enter') q('#ok').click(); };
@@ -441,21 +458,28 @@ async function downloadText(name, text, type) {
   const blob = text instanceof Blob ? text : new Blob([text], { type: type + ';charset=utf-8' });
   return saveFile(name, blob);
 }
-const EXPORT_SECTIONS = [['cover', 'Couverture'], ['film', 'Le film / épisodes'], ['chars', 'Personnages'], ['places', 'Lieux'], ['objects', 'Objets'], ['dec', 'Découpage technique'], ['story', 'Storyboard des plans'], ['canvas', 'Vue d’ensemble du canvas'], ['mood', 'Moodboards par scène'], ['notes', 'Notes et mind maps'], ['palette', 'Palette de couleurs'], ['dep', 'Dépouillement'], ['art', 'Liste artistique'], ['pdt', 'Plan de travail'], ['strip', 'Stripboard'], ['fds', 'Feuilles de service'], ['bud', 'Budget'], ['post', 'Post-production IA']];
+const pdtStyle = () => { try { return localStorage.getItem('goset.pdtstyle') || 'goset'; } catch (e) { return 'goset'; } };
+const EXPORT_SECTIONS = [['ppm', 'Brief et PPM'], ['cover', 'Couverture'], ['film', 'Le film / épisodes'], ['chars', 'Personnages'], ['places', 'Lieux'], ['objects', 'Objets'], ['dec', 'Découpage technique'], ['story', 'Storyboard des plans'], ['canvas', 'Vue d’ensemble du canvas'], ['mood', 'Moodboards par scène'], ['notes', 'Notes et mind maps'], ['palette', 'Palette de couleurs'], ['dep', 'Dépouillement'], ['art', 'Liste artistique'], ['pdt', 'Plan de travail'], ['strip', 'Stripboard'], ['fds', 'Feuilles de service'], ['bud', 'Budget'], ['post', 'Post-production IA']];
 function openExport() {
-  const saved0 = (() => { try { return JSON.parse(localStorage.getItem('sp.export2') || 'null'); } catch { return null; } })(); const saved = saved0 ? [...saved0, ...['film', 'chars', 'places', 'objects', 'bud', 'post'].filter(k => !saved0.includes('_' + k) && !saved0.includes(k))] : EXPORT_SECTIONS.map(x => x[0]);
+  const saved0 = (() => { try { return JSON.parse(localStorage.getItem('sp.export2') || 'null'); } catch { return null; } })(); const saved = saved0 ? [...saved0, ...['film', 'chars', 'places', 'objects', 'bud', 'post', 'ppm'].filter(k => !saved0.includes('_' + k) && !saved0.includes(k))] : EXPORT_SECTIONS.map(x => x[0]);
   modal(`<div class="row between"><h3>Exporter en présentation PDF</h3><button class="x" data-close>✕</button></div>
     <p class="note">Diapositives 16:9, prêtes à projeter, imprimer ou envoyer.</p>
-    <div class="checks">${EXPORT_SECTIONS.filter(([k]) => !(isAI(S.project) && ['dep', 'art', 'pdt', 'strip', 'fds'].includes(k)) && !(k === 'post' && !isAI(S.project))).map(([k, l]) => `<label><input type="checkbox" value="${k}" ${saved.includes(k) ? 'checked' : ''}>${l}</label>`).join('')}</div>
+    <div class="checks">${EXPORT_SECTIONS.filter(([k]) => !(isAI(S.project) && ['dep', 'art', 'pdt', 'strip', 'fds'].includes(k)) && !(k === 'post' && !isAI(S.project)) && !(k === 'ppm' && !isPub(S.project))).map(([k, l]) => `<label><input type="checkbox" value="${k}" ${saved.includes(k) ? 'checked' : ''}>${l}</label>`).join('')}</div>
     <div class="row"><button class="link" data-all>Tout cocher</button><button class="link" data-none>Tout décocher</button></div>
+    ${isAI(S.project) ? '' : `<div class="xstyle"><b>${tr('Style du plan de travail')}</b><div class="xs-opts">
+      <label class="xs ${pdtStyle() === 'goset' ? 'on' : ''}"><input type="radio" name="pdts" value="goset" ${pdtStyle() === 'goset' ? 'checked' : ''}><span class="xs-pv goset"><i></i><i></i><i></i><i></i></span><span><b>GOSET</b><small>${tr('Tableau moderne par journée, format 16:9')}</small></span></label>
+      <label class="xs ${pdtStyle() === 'classic' ? 'on' : ''}"><input type="radio" name="pdts" value="classic" ${pdtStyle() === 'classic' ? 'checked' : ''}><span class="xs-pv classic"><i></i><i></i><i></i><i></i><i></i></span><span><b>${tr('Classique')}</b><small>${tr('Bandes verticales et rôles en lignes, A3 paysage (modèle AFAR)')}</small></span></label></div></div>`}
     <div class="err" id="xerr"></div>
     <div class="row end"><a class="btn ghost hidden" id="xopen" target="_blank" rel="noopener">Ouvrir</a><button class="btn" id="xgo">Créer le PDF</button></div>`,
     (bg) => {
       const boxes = () => [...bg.querySelectorAll('.checks input')];
+      bg.querySelectorAll('[name=pdts]').forEach(r => r.onchange = () => bg.querySelectorAll('.xs').forEach(l => l.classList.toggle('on', l.querySelector('input').checked)));
       bg.querySelector('[data-all]').onclick = () => boxes().forEach(b => b.checked = true);
       bg.querySelector('[data-none]').onclick = () => boxes().forEach(b => b.checked = false);
       bg.querySelector('#xgo').onclick = async () => {
-        const sel = boxes().filter(b => b.checked).map(b => b.value);
+        let sel = boxes().filter(b => b.checked).map(b => b.value);
+        const sty = bg.querySelector('[name=pdts]:checked')?.value || 'goset'; try { localStorage.setItem('goset.pdtstyle', sty); } catch (e) { /* rien */ }
+        if (sty === 'classic') sel = sel.map(k => k === 'pdt' ? 'pdtc' : k);
         if (!sel.length) { bg.querySelector('#xerr').textContent = 'Choisissez au moins une partie.'; return; }
         localStorage.setItem('sp.export2', JSON.stringify(sel));
         const btn = bg.querySelector('#xgo'); btn.disabled = true; btn.textContent = 'Création…'; bg.querySelector('#xerr').textContent = '';
@@ -513,7 +537,8 @@ initPrepAI({
 // ---------- Projet ----------
 const AI_SKIP = new Set(['dep', 'art', 'pdt', 'fds']);
 const tabsFor = p => {
-  if (isAI(p)) return [TABS[0], ['ai', 'Studio IA'], ...TABS.slice(1).filter(t => !AI_SKIP.has(t[0]))];
+  if (isAI(p)) return [TABS[0], ['ai', 'Studio IA'], ...(isPub(p) ? [['brief', 'Brief']] : []), ...TABS.slice(1).filter(t => !AI_SKIP.has(t[0]))];
+  if (isPub(p)) return [TABS[0], ['brief', 'Brief'], ...TABS.slice(1)];
   if (formatOf(p) === 'clip') return TABS.map(t => t[0] === 'script' ? ['script', 'Paroles'] : t);
   return TABS;
 };
@@ -524,7 +549,7 @@ function scheduleSave() { dirty = true; setStatus('Modifié…'); clearTimeout(s
 async function flush() {
   clearTimeout(saveT); if (!dirty || !S.project) return; dirty = false;
   const p = S.project; setStatus('Enregistrement…');
-  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, format: p.format || undefined } }); setStatus('Enregistré'); }
+  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, brief: p.brief || null, format: p.format || undefined } }); setStatus('Enregistré'); }
   catch (e) { dirty = true; setStatus('Non enregistré'); toast('Enregistrement impossible : ' + esc(e.message)); }
 }
 window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, tags: p.tags || null, format: p.format || undefined }) }); } });
@@ -589,9 +614,9 @@ async function openProject(id, tab, ep) {
     const epObj = series && S.ep ? p.episodes.find(e => e.id === S.ep) : null, epN = epObj ? p.episodes.indexOf(epObj) + 1 : 0;
     app.innerHTML = `<div class="proj">
       <header class="ptop">
-        <a class="back" href="${series ? `#/p/${id}` : '#/files'}">‹ ${series ? 'Série' : 'Projets'}</a>
+        <a class="back" href="${series ? `#/p/${id}` : '#/files'}">‹ ${series ? tr(isPub(p) ? 'Campagne' : 'Série') : 'Projets'}</a>
         <input class="pname" value="${esc(p.name)}" spellcheck="false">
-        ${series ? `<select class="epsel" title="Épisode"><option value="">Toute la série</option>${p.episodes.map((e, i) => `<option value="${e.id}" ${e.id === S.ep ? 'selected' : ''}>Ép. ${i + 1} · ${esc(e.name || '')}</option>`).join('')}</select>` : ''}
+        ${series ? `<select class="epsel" title="${tr(unitWord(p))}"><option value="">${tr(isPub(p) ? 'Toute la campagne' : 'Toute la série')}</option>${p.episodes.map((e, i) => `<option value="${e.id}" ${e.id === S.ep ? 'selected' : ''}>${isPub(p) ? 'Spot' : 'Ép.'} ${i + 1} · ${esc(e.name || '')}</option>`).join('')}</select>` : ''}
         <nav class="ptabs">${tabsFor(p).map(([k, l]) => `<a href="${pbase()}/${k}" data-t="${k}" class="${k === 'ai' ? 'ai-tab' : ''}">${k === 'ai' ? '✦ ' : ''}${l}</a>`).join('')}</nav>
         <span class="pstat" id="pstat">Enregistré</span>
         <button class="btn sm" id="pexport" title="Exporter la présentation PDF">Exporter PDF</button>
@@ -621,20 +646,32 @@ function renderSeriesHome() {
   const epTile = (e, i) => {
     const sc = P.scenes.filter(x => x.epId === e.id), mins = sc.reduce((a, x) => a + x.est, 0);
     return `<div class="tile eptile" data-ep="${e.id}" tabindex="0"><div class="thumb strips" style="--c:${p.color}">${sc.slice(0, 12).map(x => `<i class="sw ${cls(x)}"></i>`).join('') || '<span class="emptyep">Vide</span>'}</div>
-      <div class="nm"><span class="epn">Ép. ${i + 1}</span>${esc(e.name || '')}</div><div class="meta">${sc.length} scène${sc.length > 1 ? 's' : ''}${mins ? ' · ' + Math.round(mins / 60 * 10) / 10 + ' h de tournage' : ''}</div><button class="more" data-epmenu="${e.id}" title="Options">•••</button></div>`;
+      <div class="nm"><span class="epn">${isPub(p) ? 'Spot' : 'Ép.'} ${i + 1}</span>${esc(e.name || '')}</div><div class="meta">${sc.length} scène${sc.length > 1 ? 's' : ''}${mins ? ' · ' + Math.round(mins / 60 * 10) / 10 + ' h de tournage' : ''}</div><button class="more" data-epmenu="${e.id}" title="Options">•••</button></div>`;
   };
-  const SER = [['canvas', 'Canvas', 'Moodboard et mind map de la série'], ['bible', 'Bible', 'Personnages, lieux, objets'], ['pdt', 'Plan de travail', 'Toute la série, glisser-déposer'], ['art', 'Liste artistique', 'Comédiens, contrats, dispos'], ['dep', 'Dépouillement', 'Tous les épisodes'], ['dec', 'Découpage', 'Plans de toute la série'], ['fds', 'Feuilles de service', 'Une par jour de tournage']];
-  app.innerHTML = `<div class="shome"><header class="ftool"><a class="back" href="#/files">‹ Projets</a><h1>${esc(p.name)}</h1><span class="sbadge">Série</span><div class="sp"></div><button class="btn sm ghost" id="pexport">Exporter PDF</button></header>
-    <section class="pad2"><h2 class="sh">Épisodes <small>${p.episodes.length}</small></h2>
-      <div class="fl-grid eps">${p.episodes.map(epTile).join('')}<button class="tile addep" data-epadd><div class="thumb blank2"><span>+</span></div><div class="nm">Nouvel épisode</div></button></div>
-      <h2 class="sh">Toute la série</h2>
+  const SER = [...(isPub(p) ? [['brief', 'Brief', 'Client, message, livrables, PPM']] : []), ['canvas', 'Canvas', 'Moodboard et mind map de la série'], ['bible', 'Bible', 'Personnages, lieux, objets'], ['pdt', 'Plan de travail', 'Toute la série, glisser-déposer'], ['art', 'Liste artistique', 'Comédiens, contrats, dispos'], ['dep', 'Dépouillement', 'Tous les épisodes'], ['dec', 'Découpage', 'Plans de toute la série'], ['fds', 'Feuilles de service', 'Une par jour de tournage']];
+  app.innerHTML = `<div class="shome"><header class="ftool"><a class="back" href="#/files">‹ Projets</a><h1>${esc(p.name)}</h1><span class="sbadge">${isPub(p) ? tr('Campagne') : 'Série'}</span><div class="sp"></div><button class="btn sm ghost" id="pexport">Exporter PDF</button></header>
+    <section class="pad2"><h2 class="sh">${tr(unitWord(p, true))} <small>${p.episodes.length}</small></h2>
+      <div class="fl-grid eps">${p.episodes.map(epTile).join('')}<button class="tile addep" data-epadd><div class="thumb blank2"><span>+</span></div><div class="nm">${tr(isPub(p) ? 'Nouveau spot' : 'Nouvel épisode')}</div></button><label class="tile addep" title="${tr('Chaque fichier devient un épisode, dans l’ordre des numéros')}"><div class="thumb blank2"><span>⇪</span></div><div class="nm">${tr(isPub(p) ? 'Importer plusieurs spots' : 'Importer plusieurs épisodes')}</div><input type="file" id="epfiles" multiple accept=".pdf,.docx,.fdx,.fountain,.txt" hidden></label></div>
+      <h2 class="sh">${tr(isPub(p) ? 'Toute la campagne' : 'Toute la série')}</h2>
       <div class="sgrid">${SER.map(([k, l, d]) => `<a class="scard" href="#/p/${p.id}/${k}"><b>${l}</b><span>${d}</span></a>`).join('')}</div>
       <p class="note">${P.scenes.length} scènes · ${P.roles.length} rôles · ${P.days.length} jours de tournage pour toute la série.</p></section></div>`;
   app.querySelector('#pexport').onclick = openExport;
+  app.querySelector('#epfiles').onchange = async ev => {
+    const files = [...ev.target.files]; if (!files.length) return;
+    try {
+      const list = await readEpisodes(files, (i, n) => toast(`${tr('Lecture')} ${i}/${n}…`, 1200));
+      // Remplit d'abord les épisodes vides, puis ajoute les suivants
+      let k = 0;
+      p.episodes.forEach(e => { if (k < list.length && !(e.script || '').trim()) e.script = list[k++].script; });
+      while (k < list.length) p.episodes.push({ id: epId(), name: tr(unitWord(p) + ' ' + (p.episodes.length + 1)), script: list[k++].script });
+      scheduleSave(); reanalyse(false); renderSeriesHome();
+      toast(`${list.length} ${tr(isPub(p) ? 'spot(s) importé(s)' : 'épisode(s) importé(s)')}`);
+    } catch (e) { toast(esc(e.message)); }
+  };
   const root = app.querySelector('.shome');
   root.addEventListener('click', async ev => {
     const m = ev.target.closest('[data-epmenu]'); if (m) { ev.stopPropagation(); return epMenu(ev, m.dataset.epmenu); }
-    if (ev.target.closest('[data-epadd]')) { p.episodes.push({ id: epId(), name: tr('Épisode ' + (p.episodes.length + 1)), script: '' }); scheduleSave(); reanalyse(false); return renderSeriesHome(); }
+    if (ev.target.closest('[data-epadd]')) { p.episodes.push({ id: epId(), name: tr(unitWord(p) + ' ' + (p.episodes.length + 1)), script: '' }); scheduleSave(); reanalyse(false); return renderSeriesHome(); }
     const t = ev.target.closest('.eptile'); if (t) nav(`#/p/${p.id}/e/${t.dataset.ep}`);
   });
   root.addEventListener('contextmenu', ev => { const t = ev.target.closest('.eptile'); if (t) { ev.preventDefault(); epMenu(ev, t.dataset.ep); } });
@@ -675,6 +712,12 @@ function renderTab() {
     return draw(S.bsub || 'film');
   }
   if (S.tab === 'script') return renderScript(body);
+  if (S.tab === 'brief') {
+    const t0 = body.scrollTop, draw = () => { body.innerHTML = renderBrief(p, isSeriesP(p) ? p.episodes : []); };
+    draw(); body.scrollTop = t0;
+    if (!body.dataset.brb) { body.dataset.brb = '1'; bindBrief(body, { project: p, save: scheduleSave, refresh: () => setTimeout(() => { if (S.tab === 'brief') { const t1 = body.scrollTop; draw(); body.scrollTop = t1; } }, 0) }); }
+    return;
+  }
   if (S.tab === 'ai') {
     const top0 = body.scrollTop;
     const draw = sub => { if (sub) S.aisub = sub; const t0 = body.scrollTop; body.innerHTML = renderAIStudio(p, S.P, S.aisub || 'chars'); body.scrollTop = sub ? 0 : t0; };
@@ -754,6 +797,9 @@ function bindProdEvents() {
     const en = e.target.closest('[data-ent]'); if (en) return openEntity(en.dataset.ent, () => { reanalyse(false); renderTab(); });
     const c = e.target.closest('[data-copy]'); if (c) return copyTable(c.dataset.copy);
     const ct = e.target.closest('[data-copytext]'); if (ct) return copyText(document.getElementById(ct.dataset.copytext).innerText);
+    if (e.target.closest('[data-aidep]')) return aiBreakdown();
+    if (e.target.closest('[data-xoadd]')) { const st = S.project.settings; (st.extraOff ||= []).push({ d: st.start || '', l: '' }); scheduleSave(); S.keepScroll = true; return renderTab(); }
+    const xd = e.target.closest('[data-xodel]'); if (xd) { S.project.settings.extraOff.splice(+xd.dataset.xodel, 1); scheduleSave(); reanalyse(false); S.keepScroll = true; return renderTab(); }
     if (S.tab === 'bud') {
       const B = S.project.budget ||= budgetDefaults(); B.auto ||= {}; B.lines ||= [];
       const ba = e.target.closest('[data-badd]'); if (ba) { B.lines.push({ id: epId(), cat: ba.dataset.badd, label: '', qty: 1, unit: 'forfait', rate: 0, c: B.cur || 'TND' }); scheduleSave(); S.keepScroll = true; renderTab(); setTimeout(() => { const l = [...body.querySelectorAll('input.bi')].pop(); l?.focus(); }, 30); return; }
@@ -782,7 +828,13 @@ function bindProdEvents() {
     if (e.target.matches('[data-cat]') && S.tab !== 'bible') { S.project.edits['cat.' + e.target.dataset.cat] = e.target.value; scheduleSave(); reanalyse(false); renderTab(); }
     if (e.target.matches('select[data-shot]')) { const [k, id, f] = e.target.dataset.shot.split('|'); const x = (S.project.shots?.[k] || []).find(y => y.id === id); if (x) { x[f] = e.target.value; scheduleSave(); } }
     if (e.target.matches('[data-sel]')) { S.project.edits[e.target.dataset.sel] = e.target.value; e.target.className = 'csel st-' + (e.target.value || 'none').toLowerCase().replace(/[^a-z]/g, ''); scheduleSave(); }
-    if (e.target.matches('[data-s]') && S.tab === 'pdt') { S.project.settings[e.target.dataset.s] = e.target.value; scheduleSave(); reanalyse(false); S.keepScroll = true; renderTab(); toast('Plan de travail recalculé'); }
+    if (S.tab === 'pdt' && (e.target.dataset.off != null || e.target.dataset.xo != null)) {
+      const st = S.project.settings;
+      if (e.target.dataset.off != null) { const cur = new Set(offDays(st)); const n = +e.target.dataset.off; e.target.checked ? cur.add(n) : cur.delete(n); if (cur.size >= 7) { toast(tr('Il faut au moins un jour de tournage par semaine.')); return renderTab(); } st.off = [...cur]; }
+      else { const [i, f] = e.target.dataset.xo.split('|'); const xo = st.extraOff ||= []; if (xo[+i]) xo[+i][f] = e.target.value; }
+      scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); toast(tr('Plan de travail recalculé')); return;
+    }
+    if (e.target.matches('[data-s]') && S.tab === 'pdt') { S.project.settings[e.target.dataset.s] = e.target.value; scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); toast('Plan de travail recalculé'); }
     if (e.target.matches('[data-pat]')) { const k = 'fds.' + e.target.dataset.pat + '.pat'; if (e.target.value) S.project.edits[k] = e.target.value; else delete S.project.edits[k]; scheduleSave(); reanalyse(false); renderTab(); toast('Horaires de la journée recalculés'); }
   });
   body.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.strip[data-scene]')) openScene(e.target.dataset.scene); });
@@ -796,6 +848,45 @@ function copyTable(id) { const t = document.getElementById(id); if (t) copyText(
 
 // ---------- Onglet Scénario ----------
 const epId = () => Math.random().toString(36).slice(2, 8);
+const isSeriesP = p => Array.isArray(p.episodes) && p.episodes.length > 0;
+// Dépouillement complété par l'IA : le texte d'action des scènes est envoyé (avec accord) au service IA gratuit
+function aiBreakdown() {
+  const p = S.project, P = S.P;
+  modal(`<div class="row between"><h3>✦ ${tr('Compléter le dépouillement avec l’IA')}</h3><button class="x" data-close>✕</button></div>
+    <p class="note">${tr('L’IA lit les descriptions des scènes (sans les dialogues) et ajoute les accessoires, costumes, maquillage, véhicules, animaux, effets et figurants oubliés par la détection automatique. Vous pourrez tout corriger dans le tableau.')}</p>
+    <p class="note">${tr('Le texte des scènes est envoyé au service IA gratuit. N’utilisez pas cette option pour un scénario confidentiel.')}</p>
+    <div class="err" id="aiderr"></div>
+    <div class="row end"><button class="btn ghost" data-close>${tr('Annuler')}</button><button class="btn ai-grad" id="aidgo">${tr('Lancer')} (${P.scenes.length} ${tr('scènes')})</button></div>`, (bg, close) => {
+    bg.querySelector('#aidgo').onclick = async () => {
+      const b = bg.querySelector('#aidgo'); b.disabled = true;
+      const chunks = []; let cur = [], size = 0;
+      P.scenes.forEach(sc => { const t = `[${sc.k}] ${sc.ie} ${sc.decor} - ${sc.timeL}: ${sc.action.join(' ').slice(0, 1500)}`; if (size + t.length > 6000 && cur.length) { chunks.push(cur); cur = []; size = 0; } cur.push(t); size += t.length; });
+      if (cur.length) chunks.push(cur);
+      let added = 0;
+      try {
+        for (let i = 0; i < chunks.length; i++) {
+          b.textContent = `${tr('Analyse')} ${i + 1}/${chunks.length}…`;
+          const r = await askAI([{ role: 'system', content: 'You are a film first assistant director doing a script breakdown. Answer only with JSON.' },
+            { role: 'user', content: `For each scene below (key in brackets), list the physical elements a production must prepare, in the language of the script, short nouns with their key detail (e.g. "bouteille de vin rouge", "pinceau"). Categories: acc (props), cos (costumes/wardrobe), hmc (hair, make-up, special make-up), veh (vehicles), ani (animals), fig (extras/background), casc (stunts), sfx (special/visual effects), son (sound/music played on set). Do not list characters. JSON: {"scenes":{"KEY":{"acc":[],"cos":[],"hmc":[],"veh":[],"ani":[],"fig":[],"casc":[],"sfx":[],"son":[]}}}\n\n` + chunks[i].join('\n') }]);
+          const j = parseJSON(r); const sc = j && (j.scenes || j);
+          if (sc && typeof sc === 'object') Object.entries(sc).forEach(([k, f]) => { if (!P.scenes.some(x => x.k === k) || !f) return; const o = ((p.found ||= {})[k] ||= {}); Object.entries(f).forEach(([c, list]) => { if (!Array.isArray(list)) return; o[c] = [...new Set([...(o[c] || []), ...list.map(x => String(x).toLowerCase().trim()).filter(Boolean)])]; added += list.length; }); });
+        }
+        scheduleSave(); reanalyse(false); close(); renderTab();
+        toast(added ? `${added} ${tr('éléments ajoutés au dépouillement')}` : tr('Rien de nouveau trouvé.'));
+      } catch (e) { bg.querySelector('#aiderr').textContent = e.message || tr('Service IA indisponible.'); b.disabled = false; b.textContent = tr('Réessayer'); }
+    };
+  });
+}
+// Plusieurs fichiers d'épisodes : rangés par numéro d'épisode trouvé dans le nom (Ep 2, E03, Épisode_4, 1x05…), sinon par nom
+export function episodeOrder(files) {
+  const num = f => { const n = f.name.replace(/\.[^.]+$/, ''); const m = n.match(/(?:[ée]pisode|ep|e|x)\s*[-_.#]?\s*(\d{1,3})(?!\d)/i) || n.match(/(\d{1,3})(?!.*\d)/); return m ? +m[1] : 1e9; };
+  return [...files].sort((a, b) => num(a) - num(b) || a.name.localeCompare(b.name, undefined, { numeric: true }));
+}
+async function readEpisodes(files, onStep) {
+  const out = []; let i = 0;
+  for (const f of episodeOrder(files)) { onStep && onStep(++i, files.length); out.push({ name: f.name.replace(/\.[^.]+$/, ''), script: await readFile(f) }); }
+  return out;
+}
 // Film → série : le scénario devient l'épisode 1 et toutes les modifications suivent (clés de scène renommées)
 function toSeries() {
   const p = S.project, id = epId(), old = analyse(p);
@@ -843,7 +934,8 @@ function renderScript(body) {
     </aside>
     <section class="sed">
       <div class="row between"><div class="note" id="sstat"></div>
-        <div class="row"><label class="btn sm ghost">Importer${series ? ' dans cet épisode' : ''}…<input type="file" id="sfile" accept=".pdf,.docx,.fdx,.fountain,.txt" hidden></label></div></div>
+        <div class="row"><button class="btn sm ghost hltog" id="hltog" aria-pressed="true">${tr('Surligner')}</button><label class="btn sm ghost">Importer${series ? ' dans cet épisode' : ''}…<input type="file" id="sfile" accept=".pdf,.docx,.fdx,.fountain,.txt" hidden></label></div></div>
+      <div class="hlleg" id="hlleg">${HL.map(([c, l]) => `<span class="hl-${c}">${tr(l)}</span>`).join('')}</div>
       <textarea id="stxt" spellcheck="false" placeholder="${clip ? 'Collez ou écrivez les paroles ici.&#10;&#10;[Intro 0:00] EXT. TOIT - NUIT&#10;(Ce que l’on voit)&#10;Avec : Artiste&#10;&#10;[Couplet 1 0:15] INT. STUDIO - JOUR&#10;Paroles…&#10;&#10;[Refrain 0:45]&#10;Paroles…' : 'Collez ou écrivez le scénario' + (series ? ' de cet épisode' : '') + ' ici.&#10;&#10;1. INT. CUISINE - JOUR&#10;&#10;Action…&#10;&#10;PERSONNAGE&#10;Dialogue…'}" dir="auto">${esc(text)}</textarea>
     </section></div>`;
   const tx = $('#stxt'); let t = null;
@@ -861,12 +953,17 @@ function renderScript(body) {
   refreshSide();
   // « @ » : appeler un personnage, un lieu ou un objet ; un nouveau nom reçoit la catégorie choisie
   attachMentions(tx, { items: mentionItems, create: mentionCreate });
+  // Surlignage des éléments (rôles, accessoires, costumes…) : réglage gardé dans le navigateur
+  const hl = attachHighlight(tx, () => termsOf(S.P, p));
+  const hlOn = (() => { try { return localStorage.getItem('goset.hl') !== '0'; } catch (e) { return true; } })();
+  const setHl = v => { hl.toggle(v); $('#hltog').setAttribute('aria-pressed', v); $('#hlleg').classList.toggle('hidden', !v); try { localStorage.setItem('goset.hl', v ? '1' : '0'); } catch (e) { /* rien */ } };
+  setHl(hlOn); $('#hltog').onclick = () => setHl(!hl.on);
   tx.addEventListener('input', () => {
     setText(tx.value); scheduleSave(); $('#sstat').innerHTML = 'Analyse…';
-    clearTimeout(t); t = setTimeout(() => { reanalyse(true); refreshSide(); }, 600);
+    clearTimeout(t); t = setTimeout(() => { reanalyse(true); refreshSide(); hl.refresh(); }, 600);
   });
   $('#slist').addEventListener('click', e => { const b = e.target.closest('.sitem'); if (b) goLine(+b.dataset.line); });
-  $('#smnt').addEventListener('change', e => { const n = e.target.dataset.mtag; if (n == null) return; const v = e.target.value; p.tags ||= {}; if (v === '-' || !v) delete p.tags[n.toLowerCase()]; else p.tags[n.toLowerCase()] = v; scheduleSave(); reanalyse(false); refreshSide(); });
+  $('#smnt').addEventListener('change', e => { const n = e.target.dataset.mtag; if (n == null) return; const v = e.target.value; p.tags ||= {}; if (v === '-' || !v) delete p.tags[n.toLowerCase()]; else p.tags[n.toLowerCase()] = v; scheduleSave(); reanalyse(false); refreshSide(); hl.refresh(); });
   body.querySelector('.snav').addEventListener('click', async e => {
     if (e.target.closest('[data-cliptpl]')) { tx.value = '[Intro 0:00] EXT. LIEU - NUIT\n(Ce que l’on voit)\nAvec : Artiste\n\n[Couplet 1 0:15] INT. LIEU - JOUR\n\n\n[Refrain 0:45]\n\n\n[Couplet 2 1:15]\n\n\n[Refrain 1:45]\n\n\n[Pont 2:15]\n\n\n[Refrain final 2:35]\n\n\n[Outro 3:00]\n'; tx.dispatchEvent(new Event('input')); e.target.closest('[data-cliptpl]').remove(); tx.focus(); return; }
     const b = e.target.closest('button'); if (!b) return;

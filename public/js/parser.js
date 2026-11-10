@@ -67,17 +67,34 @@ function cue(t) {
   return { name: n, inline };
 }
 export const DICT = {
-  acc: ['valise', 'valises', 'sac à dos', 'sac', 'lettre', 'lettres', 'enveloppe', 'téléphone', 'portable', 'clé', 'clés', 'couteau', 'verre', 'verres', 'tasse', 'tasses', 'bouteille', 'cigarette', 'cigarettes', 'briquet', 'livre', 'journal', 'photo', 'photos', 'billet', 'billets', 'carnet', 'stylo', 'ordinateur', 'montre', 'horloge', 'bague', 'parapluie', 'suitcase', 'bag', 'letter', 'envelope', 'phone', 'key', 'keys', 'knife', 'cup', 'bottle', 'lighter', 'book', 'newspaper', 'ticket', 'notebook', 'laptop', 'umbrella'],
-  veh: ['voiture', 'taxi', 'louage', 'moto', 'scooter', 'autobus', 'bus', 'camion', 'camionnette', 'vélo', 'train', 'tramway', 'métro', 'ambulance', 'bateau', 'truck', 'motorcycle', 'bike', 'boat', 'van'],
-  ani: ['chien', 'chiens', 'chat', 'chats', 'cheval', 'chevaux', 'âne', 'chèvre', 'mouton', 'moutons', 'poule', 'poules', 'oiseau', 'oiseaux', 'chameau', 'dog', 'cat', 'horse', 'bird'],
-  casc: ['bagarre', 'se battent', 'se bat', 'frappe', 'gifle', 'chute', 'tombe à terre', 'trébuche', 'saute', 'poursuite', 'court après', 'renverse', 'percute', 'accident', 's\'effondre', 'fight', 'punches', 'falls', 'jumps', 'chase', 'crash'],
-  sfx: ['explosion', 'explose', 'feu', 'incendie', 'flammes', 'fumée', 'pluie', 'orage', 'neige', 'vent', 'brouillard', 'coup de feu', 'coups de feu', 'pistolet', 'fusil', 'sang', 'blessure', 'éclair', 'fire', 'smoke', 'rain', 'storm', 'snow', 'fog', 'gunshot', 'gun', 'blood'],
-  fig: ['foule', 'passants', 'voyageurs', 'clients', 'habitués', 'élèves', 'invités', 'serveur', 'serveuse', 'policiers', 'passagers', 'badauds', 'public', 'crowd', 'passengers', 'customers', 'guests', 'waiter', 'waitress'],
-  son: ['musique', 'chanson', 'radio', 'télévision', 'télé', 'téléphone sonne', 'sonnerie', 'haut-parleur', 'klaxon', 'music', 'song', 'loudspeaker', 'phone rings']
+  acc: ['valise', 'valises', 'sac à dos', 'sac à main', 'sac', 'sacoche', 'cartable', 'lettre', 'lettres', 'enveloppe', 'colis', 'paquet', 'téléphone', 'portable', 'smartphone', 'clé', 'clés', 'trousseau', 'couteau', 'ciseaux', 'verre', 'verres', 'tasse', 'tasses', 'bol', 'assiette', 'plateau', 'bouteille', 'carafe', 'théière', 'cafetière', 'cigarette', 'cigarettes', 'cigare', 'briquet', 'allumettes', 'cendrier', 'livre', 'livres', 'cahier', 'journal', 'magazine', 'photo', 'photos', 'cadre', 'billet', 'billets', 'ticket', 'carnet', 'stylo', 'crayon', 'pinceau', 'pinceaux', 'palette', 'toile', 'chevalet', 'peinture', 'ordinateur', 'tablette', 'appareil photo', 'caméra', 'micro', 'casque', 'écouteurs', 'montre', 'horloge', 'réveil', 'bague', 'collier', 'bracelet', 'boucles d\'oreilles', 'lunettes', 'parapluie', 'miroir', 'mouchoir', 'mouchoirs', 'serviette', 'portefeuille', 'porte-monnaie', 'argent', 'pièce', 'carte', 'passeport', 'bougie', 'bougies', 'lampe', 'torche', 'lampe torche', 'corde', 'marteau', 'tournevis', 'arme', 'revolver', 'bouquet', 'fleurs', 'rose', 'cadeau', 'gâteau', 'pain', 'radio', 'guitare', 'violon', 'piano', 'oud', 'ballon', 'jouet', 'poupée', 'chapelet', 'coran', 'bible', 'médicaments', 'seringue', 'fiole', 'flacon', 'parfum', 'rouge à lèvres', 'minibar', 'mini bar',
+        'suitcase', 'bag', 'handbag', 'purse', 'backpack', 'letter', 'envelope', 'parcel', 'phone', 'mobile', 'key', 'keys', 'knife', 'scissors', 'glass', 'glasses', 'cup', 'mug', 'plate', 'tray', 'bottle', 'jug', 'cigarette', 'cigar', 'lighter', 'matches', 'ashtray', 'book', 'notebook', 'newspaper', 'magazine', 'photo', 'photograph', 'frame', 'ticket', 'pen', 'pencil', 'brush', 'paintbrush', 'canvas', 'easel', 'laptop', 'computer', 'tablet', 'camera', 'microphone', 'headphones', 'watch', 'clock', 'ring', 'necklace', 'bracelet', 'earrings', 'sunglasses', 'umbrella', 'mirror', 'tissue', 'tissues', 'towel', 'wallet', 'money', 'coin', 'card', 'passport', 'candle', 'lamp', 'torch', 'flashlight', 'rope', 'hammer', 'pistol', 'flowers', 'bouquet', 'gift', 'present', 'cake', 'bread', 'guitar', 'violin', 'ball', 'toy', 'doll', 'pills', 'syringe', 'perfume', 'lipstick', 'mini bar', 'minibar', 'wine', 'champagne'],
+  cos: ['robe', 'robe de soirée', 'costume', 'tailleur', 'chemise', 'chemisier', 't-shirt', 'pull', 'gilet', 'veste', 'blouson', 'manteau', 'imperméable', 'trench', 'jupe', 'pantalon', 'jean', 'short', 'uniforme', 'blouse', 'tablier', 'pyjama', 'peignoir', 'maillot', 'cravate', 'nœud papillon', 'écharpe', 'foulard', 'voile', 'hijab', 'chapeau', 'casquette', 'chéchia', 'jebba', 'burnous', 'kachabia', 'djellaba', 'gants', 'chaussures', 'baskets', 'talons', 'bottes', 'sandales', 'pieds nus', 'tenue', 'déguisement',
+        'dress', 'party dress', 'gown', 'suit', 'tuxedo', 'shirt', 'blouse', 't-shirt', 'sweater', 'jumper', 'jacket', 'coat', 'raincoat', 'skirt', 'trousers', 'pants', 'jeans', 'shorts', 'uniform', 'apron', 'pyjamas', 'bathrobe', 'tie', 'bow tie', 'scarf', 'headscarf', 'hat', 'cap', 'gloves', 'shoes', 'trainers', 'sneakers', 'heels', 'boots', 'sandals', 'barefoot', 'outfit', 'costume'],
+  hmc: ['maquillage', 'maquillée', 'maquillé', 'démaquillé', 'rouge à lèvres', 'mascara', 'fond de teint', 'perruque', 'moustache', 'barbe', 'chignon', 'tresse', 'tresses', 'coiffure', 'coiffée', 'cheveux mouillés', 'cicatrice', 'ecchymose', 'bleu', 'hématome', 'plaie', 'sueur', 'larmes', 'tatouage', 'henné', 'khôl', 'vieilli',
+        'make up', 'makeup', 'make-up', 'lipstick', 'mascara', 'foundation', 'wig', 'moustache', 'beard', 'bun', 'braid', 'braids', 'hair done', 'hairdo', 'wet hair', 'scar', 'bruise', 'wound', 'sweat', 'tears', 'tattoo', 'henna', 'kohl'],
+  veh: ['voiture', 'taxi', 'louage', 'moto', 'scooter', 'mobylette', 'autobus', 'bus', 'camion', 'camionnette', 'vélo', 'train', 'tramway', 'métro', 'ambulance', 'voiture de police', 'bateau', 'barque', 'avion', 'hélicoptère', 'charrette', 'ascenseur', 'car', 'cab', 'truck', 'motorcycle', 'motorbike', 'bike', 'bicycle', 'boat', 'van', 'plane', 'helicopter', 'lift', 'elevator', 'police car'],
+  ani: ['chien', 'chiens', 'chiot', 'chat', 'chats', 'chaton', 'cheval', 'chevaux', 'âne', 'chèvre', 'mouton', 'moutons', 'vache', 'poule', 'poules', 'coq', 'oiseau', 'oiseaux', 'pigeon', 'pigeons', 'mouette', 'chameau', 'dromadaire', 'poisson', 'poissons', 'abeille', 'abeilles', 'serpent', 'tortue', 'lapin', 'souris', 'rat', 'dog', 'dogs', 'puppy', 'cat', 'cats', 'kitten', 'horse', 'donkey', 'goat', 'sheep', 'cow', 'chicken', 'bird', 'birds', 'pigeon', 'seagull', 'camel', 'fish', 'bee', 'bees', 'snake', 'rabbit', 'mouse'],
+  casc: ['bagarre', 'se battent', 'se bat', 'frappe', 'gifle', 'chute', 'tombe à terre', 'trébuche', 'saute', 'poursuite', 'court après', 'renverse', 'percute', 'accident', 's\'effondre', 'fight', 'punches', 'slaps', 'falls', 'stumble', 'stumbles', 'jumps', 'chase', 'crash', 'collapses'],
+  sfx: ['explosion', 'explose', 'feu', 'incendie', 'flammes', 'fumée', 'pluie', 'orage', 'neige', 'vent', 'brouillard', 'coup de feu', 'coups de feu', 'pistolet', 'fusil', 'sang', 'blessure', 'éclair', 'écran vert', 'fire', 'flames', 'smoke', 'rain', 'storm', 'snow', 'wind', 'fog', 'gunshot', 'gun', 'blood', 'lightning', 'green screen'],
+  fig: ['foule', 'passants', 'voyageurs', 'clients', 'habitués', 'élèves', 'invités', 'serveur', 'serveuse', 'policiers', 'passagers', 'badauds', 'public', 'danseurs', 'couple', 'crowd', 'passers-by', 'passengers', 'customers', 'guests', 'waiter', 'waitress', 'police officers', 'dancers', 'audience'],
+  son: ['musique', 'chanson', 'radio', 'télévision', 'télé', 'téléphone sonne', 'sonnerie', 'haut-parleur', 'klaxon', 'ping', 'music', 'song', 'tv', 'loudspeaker', 'phone rings', 'ringtone', 'doorbell']
 };
+// Groupe nominal : « bouteille » devient « bouteille de vin rouge », « bottle » devient « bottle of red wine »
+const STOP = new Set('a an and the from in on at to with for by as is are was his her their its it et le la les un une des du sur dans avec pour par sous qui que quand puis mais ou où il elle ils elles son sa ses leur leurs ce cette eux lui nous vous moi toi soi se main mains face côté train cours plus moins fois tout toute tous him them me us you there here'.split(' '));
+const COMPL = "(?:\\s+(?:of(?:\\s+the)?|de(?:\\s+la|\\s+l')?|d'|du|des|à|au|aux|en)\\s*([\\p{L}-]{2,})(?:\\s+([\\p{L}-]{2,}))?)?";
 function detect(text, list) {
-  const low = text.toLowerCase(), f = [];
-  list.forEach(w => { if (!f.includes(w) && new RegExp('(^|[^\\p{L}])' + rx(w) + '(?![\\p{L}])', 'u').test(low)) f.push(w); });
+  const low = text.toLowerCase().replace(/[’]/g, "'"), f = [], seen = new Set();
+  [...list].sort((a, b) => b.length - a.length).forEach(w => {
+    const re = new RegExp('(^|[^\\p{L}])' + rx(w) + '(?![\\p{L}])' + COMPL, 'gu'); let m;
+    while ((m = re.exec(low))) {
+      let label = w;
+      if (m[2] && !STOP.has(m[2])) { const glue = m[0].slice(m[1].length + w.length).match(/^\s+(?:of(?:\s+the)?|de(?:\s+la|\s+l')?|d'|du|des|à|au|aux|en)\s*/u)[0]; label = w + glue + m[2] + (m[3] && !STOP.has(m[3]) ? ' ' + m[3] : ''); label = label.replace(/\s+/g, ' ').replace(/'\s+/, "'"); }
+      // un mot déjà compris dans un groupe plus long n'est pas répété (« sac » dans « sac à main »)
+      if ([...seen].some(x => x.includes(w) && x !== label)) continue;
+      if (!seen.has(label)) { seen.add(label); f.push(label); }
+    }
+  });
   return f.join(', ');
 }
 
@@ -220,7 +237,14 @@ export function estimate(s, set, edits) {
   return Math.max(15, Math.round(m / 5) * 5);
 }
 export const fmtMin = m => { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h ? h + ' h' + (r ? String(r).padStart(2, '0') : '') : r + ' min'; };
-export const dayCapacity = set => Math.max(60, (+set.hpd || 10) * 60 - 60); // journée moins la pause repas
+const hm2 = t => { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : null; };
+// Durée de la journée : heures de début et de fin si elles sont réglées, sinon « journée de travail (h) »
+export const dayLength = set => { const a = hm2(set.pat), b = hm2(set.endT); if (a != null && b != null) return ((b - a + 1440) % 1440) || 600; return (+set.hpd || 10) * 60; };
+export const dayCapacity = set => Math.max(60, dayLength(set) - 60); // journée moins la pause repas
+// Jours de repos chaque semaine (0 = dimanche … 6 = samedi) : réglage « off », sinon ancien réglage « jours / semaine »
+export const offDays = set => { if (Array.isArray(set.off)) return set.off.map(Number); const dpw = +set.dpw || 5; return dpw >= 7 ? [] : dpw == 6 ? [0] : [0, 6]; };
+export const extraOff = set => (Array.isArray(set.extraOff) ? set.extraOff : []).filter(x => x && x.d);
+export function isOff(set, d) { const x = iso(d); return offDays(set).includes(d.getDay()) || extraOff(set).some(o => x >= o.d && x <= (o.to || o.d)); }
 
 // Indisponibilités d'un comédien : [{from, to}] en dates ISO
 export function unavail(edits, name) { try { return JSON.parse(edits['unav.' + name] || '[]'); } catch (e) { return []; } }
@@ -263,7 +287,7 @@ export function plan(P, set, edits) {
   if (!manual) for (let i = days.length - 1; i >= 0; i--) if (!days[i].sc.length) days.splice(i, 1);
   if (!days.length) nd(false);
   let d = new Date((set.start || nextMonday()) + 'T12:00:00'); if (isNaN(d)) d = new Date();
-  const dpw = +set.dpw || 5;
+  if (offDays(set).length >= 7) set = { ...set, off: [] };
   days.forEach((day, i) => {
     day.n = i + 1;
     day.night = day.sc.length > 0 && day.sc.every(s => s.night); day.mixed = !day.night && day.sc.some(s => s.night);
@@ -271,13 +295,14 @@ export function plan(P, set, edits) {
     day.moves = 0; let prev = null; day.sc.forEach(s => { if (prev && prev !== s.dk) day.moves++; prev = s.dk; s.day = day.n; });
     day.min = day.sc.reduce((a, s) => a + s.est, 0) + day.moves * moveMin;
     day.over = day.min > cap;
-    while (!isWork(d, dpw)) d.setDate(d.getDate() + 1);
+    let guard = 0; while (isOff(set, d) && guard++ < 400) d.setDate(d.getDate() + 1);
     day.date = new Date(d); d.setDate(d.getDate() + 1);
     day.roles = P.roles.filter(r => day.sc.some(s => s.roles.includes(r)));
     day.conflicts = day.roles.filter(r => isUnavail(edits, r.name, day.date)).map(r => r.name);
   });
   P.roles.forEach(r => { r.days = days.filter(dd => dd.roles.includes(r)).map(dd => dd.n - 1); });
   const avg = P.scenes.length ? P.scenes.reduce((a, s) => a + s.est, 0) / P.scenes.length : 60;
+  const last = days[days.length - 1]?.date; P.wrapLate = !!(set.end && last && iso(last) > set.end);
   P.days = days; P.cap = cap; P.moveMin = moveMin; P.quota = Math.max(1, Math.floor(cap / avg)); P.manual = !!manual;
   return P;
 }
@@ -321,6 +346,8 @@ export function analyse(project) {
     s.ovr = ['decor', 'ie', 'time', 'summary'].some(f => o(f) != null && o(f) !== '') || parseInt(edits['est.' + s.k]) > 0;
   });
   applyMentions(P, project.tags || {});
+  // Éléments trouvés par l'IA (dépouillement « Compléter avec l'IA ») : project.found[clé de scène][catégorie] = [noms]
+  Object.entries(project.found || {}).forEach(([k, f]) => { const sc = P.scenes.find(x => x.k === k); if (!sc) return; Object.entries(f).forEach(([c, list]) => { if (!(c in sc.det)) return; const cur = (sc.det[c] || '').split(/\s*,\s*/).filter(Boolean); (list || []).forEach(n => { n = String(n).toLowerCase().trim(); if (n && !cur.some(x => x.includes(n) || n.includes(x))) cur.push(n); }); sc.det[c] = cur.join(', '); }); });
   P.roles.forEach(r => { const c = edits['cat.' + r.name]; if (c) r.cat = c; });
   const shots = project.shots || {}; P.scenes.forEach(s => { s.shots = (shots[s.k] || []).length; });
   return plan(P, set, edits);
