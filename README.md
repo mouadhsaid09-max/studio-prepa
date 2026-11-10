@@ -107,3 +107,9 @@ Une fois saisi, l'accès reste ouvert 30 jours sur l'appareil. Changer la valeur
 ## GOSET.ai : page d'accueil et application
 - `/` : page d'accueil publique (présentation, formats, Studio IA, tarifs, questions) — fichier `landing/index.html`. Les prix se changent dans l'objet `PRICE` en bas de ce fichier.
 - `/app` : l'application (code d'accès, puis connexion).
+
+## Assistant GOSET (Studio IA → Assistant)
+Assistant gratuit : il améliore les prompts (un plan ou tous), écrit des notes de continuité, vérifie les fiches personnages, propose des idées de plans et un plan de post-production, et répond aux questions. Les réponses utiles se gardent en notes dans le projet.
+- En ligne, il passe par `api/assist.js` (IA texte gratuite Pollinations, protégée par le code d'accès, 20 demandes par minute). Variable Vercel facultative **POLLINATIONS_KEY** (clé gratuite sur enter.pollinations.ai) pour lever les limites.
+- Seuls les noms, fiches et résumés des plans sont envoyés, jamais le scénario complet.
+- Vérification : `/api/assist?ping=1`.

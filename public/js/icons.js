@@ -50,6 +50,8 @@ const ICONS = {
   post: u => `<rect x="8" y="12" width="48" height="40" rx="8" fill="${M(u)}"/><rect x="14" y="20" width="22" height="7" rx="3.5" fill="${Wt(u)}"/><rect x="28" y="31" width="22" height="7" rx="3.5" fill="${D(u)}"/><rect x="14" y="42" width="14" height="5" rx="2.5" fill="${Wt(u)}" opacity=".8"/><path d="M40 15v34" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><path d="M36 13h8l-4 5z" fill="#fff"/>`,
   // Facture : feuille avec lignes et tampon
   invoice: u => `<path d="M14 8h30l8 8v38l-5-3-5 3-5-3-5 3-5-3-5 3-5-3-3 2V12a4 4 0 0 1 4-4z" fill="${M(u)}"/><path d="M20 20h16M20 27h22M20 34h12" stroke="${Wt(u)}" stroke-width="3.2" stroke-linecap="round"/><circle cx="41" cy="40" r="7" fill="${D(u)}"/><path d="M38 40l2 2 4-4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+  // Assistant : deux bulles avec étincelle
+  assist: u => `<path d="M10 12h30a6 6 0 0 1 6 6v14a6 6 0 0 1-6 6H24l-9 7v-7h-5a6 6 0 0 1-6-6V18a6 6 0 0 1 6-6z" fill="${A(u)}"/><path d="M48 24h4a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6h-2v6l-7-6H34a6 6 0 0 1-5-3" fill="${D(u)}" opacity=".7"/>${spark(u, 25, 25, 7.5)}`,
   // Style / palette
   style: u => `<path d="M32 9c13 0 24 9 24 21 0 7-5 10-10 10h-5c-3 0-5 3-3 6 2 4 0 9-6 9C19 55 8 45 8 32S19 9 32 9z" fill="${M(u)}"/><circle cx="21" cy="28" r="4.2" fill="${Wt(u)}"/><circle cx="30" cy="19" r="4.2" fill="${Wt(u)}"/><circle cx="42" cy="21" r="4.2" fill="${Wt(u)}"/><circle cx="21" cy="41" r="4.2" fill="${D(u)}"/>`
 };

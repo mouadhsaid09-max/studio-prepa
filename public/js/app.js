@@ -4,7 +4,7 @@ import { budgetDefaults } from './budget.js';
 import { Board } from './canvas.js';
 import { initBible, renderBible, bindBible, openEntity, openScene } from './bible.js';
 import { bindStripboard } from './stripboard.js';
-import { initPrepAI, mountButton, openAI, sketchShot, askVision, genImage } from './prepai.js';
+import { initPrepAI, mountButton, openAI, sketchShot, askVision, genImage, askAI, parseJSON } from './prepai.js';
 import { openInk } from './ink.js';
 import { glyph } from './glyphs.js';
 import { icon } from './icons.js';
@@ -656,7 +656,7 @@ function renderTab() {
     draw(); body.scrollTop = top0;
     if (!body.dataset.aib) {
       body.dataset.aib = '1';
-      bindAIStudio(body, { project: p, get P() { return S.P; }, save: scheduleSave, refresh: sub => setTimeout(() => { if (S.tab === 'ai') draw(sub); }, 0), toast, copy: t => copyText(t), download: downloadText,
+      bindAIStudio(body, { project: p, get P() { return S.P; }, ask: (m, sig) => askAI(m, sig), parseJSON, save: scheduleSave, refresh: sub => setTimeout(() => { if (S.tab === 'ai') draw(sub); }, 0), toast, copy: t => copyText(t), download: downloadText,
         genImage: (pr, r, h) => genImage(pr, r, h), upload: f => uploadCover(p.id, f) });
     }
     return;

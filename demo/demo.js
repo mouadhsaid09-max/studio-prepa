@@ -122,7 +122,7 @@
   const realFetch = window.fetch.bind(window);
   window.fetch = function (url, opts) {
     const u = typeof url === 'string' ? url : url.url;
-    if (u.startsWith('/api/')) return handle(u.split('?')[0], opts || {});
+    if (u.startsWith('/api/') && !u.startsWith('/api/assist')) return handle(u.split('?')[0], opts || {});
     return realFetch(url, opts);
   };
 })();

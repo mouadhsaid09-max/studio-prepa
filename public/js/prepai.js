@@ -41,10 +41,23 @@ export function parseJSON(text) {
   if (a < Infinity && b > a) return JSON.parse(t.slice(a, b + 1));
   throw new Error('réponse illisible');
 }
+// Version en ligne (Vercel) : relais vers l'IA texte gratuite, protégé par le code d'accès
+async function askOnline(messages, signal) {
+  const r = await fetch('/api/assist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages }), signal });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || 'Erreur ' + r.status), { code: r.status === 429 ? 'rate_limited' : 'error' });
+  return j.text;
+}
+// Conversation (assistant) : messages [{ role, content }]
+export async function askAI(messages, signal) {
+  if (X.demo && !(window.claude && window.claude.use)) return askOnline(messages, signal);
+  const flat = messages.map(m => m.role === 'system' ? m.content : (m.role === 'user' ? 'UTILISATEUR : ' : 'ASSISTANT : ') + m.content).join('\n\n') + '\n\nASSISTANT :';
+  return askText(messages.length === 1 ? messages[0].content : flat, signal);
+}
 async function askText(prompt, signal) {
   if (X.demo) {
     const s = await claudeSample();
-    if (!s) throw Object.assign(new Error('Moodboard AI fonctionne dans l’app Claude : ouvrez la démo depuis Claude.'), { code: 'unavailable' });
+    if (!s) return askOnline([{ role: 'user', content: prompt }], signal);
     try { return (await s(prompt, { signal, modelTier: 'default', cache: false })).text; }
     catch (e) { throw Object.assign(new Error(MSG[e.code] || e.message || 'erreur'), { code: e.code }); }
   }
