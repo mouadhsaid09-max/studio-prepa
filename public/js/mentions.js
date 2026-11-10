@@ -9,6 +9,11 @@ const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
 // Position du curseur dans un textarea/input (copie invisible du champ)
 function caretXY(el) {
+  if (el.isContentEditable) {
+    const sel = getSelection(); let r = sel.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : null;
+    if (!r || (!r.width && !r.height && !r.left)) r = el.getBoundingClientRect();
+    return { x: Math.min(r.left, innerWidth - 300), y: Math.min(r.bottom, innerHeight - 40) - 18 };
+  }
   const cs = getComputedStyle(el), d = document.createElement('div');
   ['boxSizing', 'width', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderLeftWidth', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform', 'wordSpacing', 'tabSize', 'direction'].forEach(k => d.style[k] = cs[k]);
   Object.assign(d.style, { position: 'absolute', visibility: 'hidden', whiteSpace: el.tagName === 'INPUT' ? 'pre' : 'pre-wrap', wordWrap: 'break-word', overflow: 'hidden', top: 0, left: '-9999px' });
@@ -25,16 +30,26 @@ export function attachMentions(el, o) {
   if (!el || el.dataset.mentions) return; el.dataset.mentions = '1';
   let pop = null, st = null;
   const close = () => { pop?.remove(); pop = null; st = null; };
+  const ce = el.isContentEditable;
+  const before = () => {
+    if (!ce) return el.value.slice(0, el.selectionStart);
+    const sel = getSelection(); if (!sel.rangeCount || !el.contains(sel.anchorNode)) return '';
+    const r = sel.getRangeAt(0).cloneRange(); r.selectNodeContents(el); r.setEnd(sel.getRangeAt(0).endContainer, sel.getRangeAt(0).endOffset); return r.toString();
+  };
   const query = () => {
-    const v = el.value.slice(0, el.selectionStart);
+    const v = before();
     const m = v.match(/@\[([^\]\n]{0,60})\]?$|@([\p{L}\p{N}_'’-]{0,40})$/u);
-    return m ? { q: (m[1] ?? m[2] ?? '').replace(/_/g, ' '), start: el.selectionStart - m[0].length } : null;
+    return m ? { q: (m[1] ?? m[2] ?? '').replace(/_/g, ' '), start: ce ? 0 : el.selectionStart - m[0].length, len: m[0].length } : null;
   };
   const insert = (name, cat) => {
     const tok = (o.token ? o.token({ name, cat }) : mentionToken(name)) + ' ';
-    const a = st.start, b = el.selectionStart;
-    el.setRangeText(tok, a, b, 'end');
-    el.dispatchEvent(new Event('input', { bubbles: true }));
+    if (ce) {
+      const sel = getSelection(); for (let i = 0; i < st.len; i++) sel.modify('extend', 'backward', 'character');
+      document.execCommand('insertText', false, tok);
+    } else {
+      el.setRangeText(tok, st.start, el.selectionStart, 'end');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     close(); el.focus();
   };
   const draw = () => {
@@ -64,15 +79,17 @@ export function attachMentions(el, o) {
   }, true);
   el.addEventListener('blur', () => setTimeout(close, 120));
   el.addEventListener('scroll', () => pop && st && draw());
+  if (ce) el.addEventListener('focusout', () => setTimeout(close, 120));
 }
 
 // Liste des éléments du projet pour « @ »
 export function projectItems(P, B, tags) {
   const out = [];
   P.roles.forEach(r => out.push({ name: r.name, cat: 'ch', hint: r.all.length ? r.all.length + ' sc.' : '' }));
-  (B ? B.ch.filter(c => !c.auto) : []).forEach(c => out.push({ name: c.name, cat: 'ch' }));
+  (B ? B.ch.filter(c => !c.auto) : []).forEach(c => out.push({ name: c.name, cat: 'ch', hint: 'Bible' }));
   (B ? B.pl : []).forEach(p => out.push({ name: p.name, cat: 'pl' }));
-  (B ? B.ob : []).forEach(x => out.push({ name: x.name, cat: 'acc' }));
+  const byLabel = Object.fromEntries(MENTION_CATS.map(([c, l]) => [l, c]));
+  (B ? B.ob : []).forEach(x => out.push({ name: x.name, cat: byLabel[x.catLabel] || 'acc' }));
   P.scenes.forEach(s => ['cos', 'hmc', 'veh', 'ani', 'fig', 'casc', 'sfx', 'son'].forEach(c => (s.det[c] || '').split(/\s*,\s*/).filter(Boolean).forEach(n => out.push({ name: n, cat: c }))));
   Object.entries(tags || {}).forEach(([n, c]) => out.push({ name: n, cat: c }));
   return out;

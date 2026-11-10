@@ -121,4 +121,4 @@ Dans l'onglet Assistant, **Étudier mes résultats** compare les bons et les mau
 ## Mentions « @ »
 Dans le scénario, tapez **@** pour appeler un personnage, un lieu ou un objet du projet (liste filtrée au fil de la frappe, ↑ ↓ Entrée). Pour plusieurs mots : `@[vieille radio]`.
 Un nom inconnu se classe tout de suite : Personnage, Lieu, Accessoire, Costume, HMC, Véhicule, Animal, Figuration, Cascade, SFX / VFX ou Son. Il apparaît alors dans le dépouillement, la Bible, la liste artistique et les feuilles de service. Le panneau « @ Éléments » liste les noms à classer et permet de changer une catégorie. Les @ disparaissent des résumés et des PDF.
-Le même « @ » marche dans l'assistant et dans les prompts du Studio IA (un personnage y devient son jeton, par exemple @yasmine).
+Tout nom créé par « @ » reçoit sa fiche dans la **Bible** (personnage, lieu, ou objet avec sa catégorie). Le « @ » marche partout dans le projet : scénario, canvas, découpage, fiches, assistant et prompts du Studio IA (un personnage y devient son jeton, par exemple @yasmine).

@@ -13,7 +13,7 @@ import { renderAIStudio, bindAIStudio } from './aistudio.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
 import { startI18n, LANG, LANGS, LOCALES, setLang, tr } from './i18n.js';
-import { setDateLocale, bible as bibleOf, MENTION_CATS } from './parser.js';
+import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey } from './parser.js';
 import { attachMentions, projectItems } from './mentions.js';
 setDateLocale(LOCALES[LANG]);
 
@@ -530,6 +530,28 @@ window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 
 const mentionItems = () => projectItems(S.P, bibleOf(S.project, S.P), S.project.tags);
+// Nouveau nom via « @ » : catégorie retenue + fiche dans la Bible (si elle n'existe pas déjà)
+function mentionCreate(name, cat) {
+  const p = S.project; (p.tags ||= {})[name.toLowerCase()] = cat;
+  const kind = cat === 'ch' ? 'ch' : cat === 'pl' ? 'pl' : 'ob', B = bibleOf(p, S.P);
+  if (!B[kind].some(x => x.name.toLowerCase() === name.toLowerCase())) {
+    const b = p.bible ||= {}, id = Math.random().toString(36).slice(2, 9), key = kind + ':c:' + id;
+    (b[{ ch: 'chars', pl: 'places', ob: 'objects' }[kind]] ||= []).push({ id });
+    p.edits ||= {}; p.edits[bibKey(key, 'name')] = kind === 'ch' ? name.toUpperCase() : name.charAt(0).toUpperCase() + name.slice(1);
+    if (kind === 'ob') p.edits[bibKey(key, 'cat')] = (MENTION_CATS.find(x => x[0] === cat) || [, 'Accessoire'])[1];
+  }
+  scheduleSave(); reanalyse(false);
+  toast(`« ${esc(name)} » ${tr('ajouté à la Bible')}`);
+}
+// « @ » partout dans le projet : tout champ texte (sauf le titre et les champs chiffrés)
+const slugTok = n => '@' + n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+document.addEventListener('focusin', e => {
+  const el = e.target;
+  if (!S.project || !el.closest || !el.closest('.proj, .modal, .shome')) return;
+  if (!(el.tagName === 'TEXTAREA' || el.isContentEditable || (el.tagName === 'INPUT' && /^(text|search|)$/.test(el.type || '')))) return;
+  if (el.matches('.pname, [data-nomention], #np, .bn, [type=number]') || el.closest('.inv, .ink-res')) return;
+  attachMentions(el, { items: mentionItems, create: mentionCreate, token: el.matches('textarea[data-aip]') ? i => i.cat === 'ch' ? ((S.project.ai?.chars?.[i.name]?.token) || slugTok(i.name)) : i.name : undefined });
+});
 function reanalyse(announce) {
   const prev = S.P; S.P = analyse(S.project);
   if (announce) {
@@ -654,10 +676,7 @@ function renderTab() {
   if (S.tab === 'script') return renderScript(body);
   if (S.tab === 'ai') {
     const top0 = body.scrollTop;
-    const slug = n => '@' + n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-    const mopt = { items: mentionItems, create: (n, c) => { (p.tags ||= {})[n.toLowerCase()] = c; scheduleSave(); }, token: i => i.cat === 'ch' ? ((p.ai?.chars?.[i.name]?.token) || slug(i.name)) : i.name };
-    const draw = sub => { if (sub) S.aisub = sub; const t0 = body.scrollTop; body.innerHTML = renderAIStudio(p, S.P, S.aisub || 'chars'); body.scrollTop = sub ? 0 : t0;
-      body.querySelectorAll('#asstq, textarea[data-aip]').forEach(el => attachMentions(el, mopt)); };
+    const draw = sub => { if (sub) S.aisub = sub; const t0 = body.scrollTop; body.innerHTML = renderAIStudio(p, S.P, S.aisub || 'chars'); body.scrollTop = sub ? 0 : t0; };
     draw(); body.scrollTop = top0;
     if (!body.dataset.aib) {
       body.dataset.aib = '1';
@@ -840,7 +859,7 @@ function renderScript(body) {
   };
   refreshSide();
   // « @ » : appeler un personnage, un lieu ou un objet ; un nouveau nom reçoit la catégorie choisie
-  attachMentions(tx, { items: mentionItems, create: (n, c) => { (p.tags ||= {})[n.toLowerCase()] = c; scheduleSave(); } });
+  attachMentions(tx, { items: mentionItems, create: mentionCreate });
   tx.addEventListener('input', () => {
     setText(tx.value); scheduleSave(); $('#sstat').innerHTML = 'Analyse…';
     clearTimeout(t); t = setTimeout(() => { reanalyse(true); refreshSide(); }, 600);

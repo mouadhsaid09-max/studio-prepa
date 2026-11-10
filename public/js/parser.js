@@ -486,6 +486,7 @@ export const KIND = {
     ['permit', 'Autorisation', 'select', ['', 'À demander', 'Demandée', 'Obtenue', 'Refusée']], ['contact', 'Contact sur place', 'text', 'Nom · tél.'],
     ['parking', 'Parking / cantine', 'text', ''], ['notes', 'Notes', 'area', '']] },
   ob: { label: 'Objet', plural: 'Objets', add: 'Ajouter un objet', fields: [
+    ['cat', 'Catégorie', 'select', ['', 'Accessoire', 'Costume', 'HMC', 'Véhicule', 'Animal', 'Figuration', 'Cascade', 'SFX / VFX', 'Son / musique']],
     ['desc', 'Description', 'area', 'Taille, couleur, état'], ['style', 'Style / époque', 'text', 'Ex. : vintage années 60'], ['qty', 'Quantité', 'text', 'Ex. : 2 (dont 1 doublure)'],
     ['status', 'Statut', 'select', ['', 'À trouver', 'Trouvé', 'Acheté', 'Loué', 'Fabriqué']], ['owner', 'Responsable', 'text', 'Déco, accessoiriste…'],
     ['scenes', 'Scènes', 'text', 'Ex. : 2, 5, 7'], ['notes', 'Notes', 'area', '']] }
@@ -499,18 +500,23 @@ export function bibKey(key, f) {
 export function bible(project, P) {
   const b = project.bible || {}, e = project.edits || {}, hidden = new Set(b.hidden || []);
   const val = (key, f) => e[bibKey(key, f)] || '';
-  const custom = (kind, list) => (list || []).map(c => ({ key: kind + ':c:' + c.id, id: c.id, name: val(kind + ':c:' + c.id, 'name') || 'Sans nom', auto: false }));
-  const chars = P.roles.map(r => ({ key: 'ch:r:' + r.name, name: r.name, auto: true, role: r, scenes: r.all.map(i => P.scenes[i].num) })).concat(custom('ch', b.chars));
+  const custom = (kind, list) => (list || []).map(c => ({ key: kind + ':c:' + c.id, id: c.id, name: val(kind + ':c:' + c.id, 'name') || 'Sans nom', auto: false, catLabel: kind === 'ob' ? val(kind + ':c:' + c.id, 'cat') : '' }));
+  // Une fiche ajoutée à la main (ou par « @ ») qui porte le même nom qu'un élément trouvé dans le scénario n'apparaît qu'une fois
+  const uniq = (auto, cust) => { const n = new Set(cust.map(c => c.name.toLowerCase())); return auto.filter(a => !n.has(a.name.toLowerCase())).concat(cust); };
+  const chars = uniq(P.roles.map(r => ({ key: 'ch:r:' + r.name, name: r.name, auto: true, role: r, scenes: r.all.map(i => P.scenes[i].num) })), custom('ch', b.chars));
   const pmap = new Map();
   P.scenes.forEach(s => { if (!pmap.has(s.dk)) pmap.set(s.dk, { key: 'pl:d:' + s.dk, name: s.dk, auto: true, scenes: [], ie: new Set() }); const p = pmap.get(s.dk); p.scenes.push(s.num); p.ie.add(s.ie); });
   P.scenes.forEach(s => (s.places || []).forEach(n => { const k = n.toUpperCase(); if (!pmap.has(k)) pmap.set(k, { key: 'pl:d:' + k, name: k, auto: true, scenes: [], ie: new Set() }); const p = pmap.get(k); if (!p.scenes.includes(s.num)) p.scenes.push(s.num); }));
-  const places = [...pmap.values()].concat(custom('pl', b.places));
+  const places = uniq([...pmap.values()], custom('pl', b.places));
   const omap = new Map();
   P.scenes.forEach(s => {
     const v = (e['bd.' + s.k + '.acc'] ?? s.det.acc) || '';
     v.split(/\s*[,;]\s*/).map(x => x.trim()).filter(Boolean).forEach(n => { const k = n.toLowerCase(); if (!omap.has(k)) omap.set(k, { key: 'ob:a:' + k, name: n.charAt(0).toUpperCase() + n.slice(1), auto: true, scenes: [] }); omap.get(k).scenes.push(s.num); });
   });
-  const objects = [...omap.values()].concat(custom('ob', b.objects));
+  // Éléments appelés par « @ » dans le scénario (costume, véhicule, animal…) : aussi dans la Bible
+  const tags = project.tags || {}, CL = Object.fromEntries(MENTION_CATS);
+  P.scenes.forEach(s => (s.mentions || []).forEach(n => { const c = mentionCat(P, tags, n) || 'acc'; if (c === 'ch' || c === 'pl') return; const k = n.toLowerCase(); if (!omap.has(k)) omap.set(k, { key: 'ob:a:' + k, name: n.charAt(0).toUpperCase() + n.slice(1), auto: true, scenes: [], catLabel: CL[c] }); const o = omap.get(k); if (!o.scenes.includes(s.num)) o.scenes.push(s.num); }));
+  const objects = uniq([...omap.values()], custom('ob', b.objects));
   const vis = l => l.filter(x => !hidden.has(x.key));
   const film = { genres: (e['film.genres'] || '').split(',').map(x => x.trim()).filter(Boolean) };
   FILM_FIELDS.forEach(([f]) => film[f] = e['film.' + f] || '');
