@@ -98,3 +98,8 @@ Bouton **Facture / devis PDF** : facture, devis, pro forma ou avoir en A4.
 - Suivi de chaque plan : À générer → Généré → Prise choisie → Composité → Upscalé → Étalonné → Son / lip-sync → Validé, avec outil/modèle, seed/version et note.
 - Listes de contrôle : finitions image, son, livrables (16:9, 9:16, 1:1, 4:5, .srt, Rec.709), transparence et droits (mentions IA des plateformes, AI Act art. 50, C2PA, consentements, licences).
 - Cible de niveau sonore, résolution et cadence du master ; section « Post-production IA » dans l'export PDF.
+
+## Code d'accès (Vercel)
+Avant la page de connexion, le site en ligne demande un code d'accès (fichier `middleware.js`).
+Le code est la variable d'environnement Vercel **ACCESS_CODE** (Project → Settings → Environment Variables) : il n'est jamais écrit dans le dépôt.
+Une fois saisi, l'accès reste ouvert 30 jours sur l'appareil. Changer la valeur puis redéployer oblige tout le monde à ressaisir le nouveau code. Sans variable, le site est ouvert.
