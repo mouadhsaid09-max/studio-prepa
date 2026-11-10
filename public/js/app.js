@@ -17,6 +17,7 @@ import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey, offDays } from '
 import { attachMentions, projectItems, caretXY } from './mentions.js';
 import { attachHighlight, termsOf, HL } from './highlight.js';
 import { renderBrief, bindBrief } from './commercial.js';
+import { renderTeam, bindTeam } from './team.js';
 setDateLocale(LOCALES[LANG]);
 
 const $ = s => document.querySelector(s);
@@ -542,17 +543,17 @@ const tabsFor = p => {
   if (formatOf(p) === 'clip') return TABS.map(t => t[0] === 'script' ? ['script', 'Paroles'] : t);
   return TABS;
 };
-const TABS = [['canvas', 'Canvas'], ['script', 'Scénario'], ['bible', 'Bible'], ['dec', 'Découpage'], ['dep', 'Dépouillement'], ['art', 'Liste artistique'], ['pdt', 'Plan de travail'], ['fds', 'Feuilles de service'], ['bud', 'Budget']];
+const TABS = [['canvas', 'Canvas'], ['script', 'Scénario'], ['bible', 'Bible'], ['team', 'Équipe'], ['dec', 'Découpage'], ['dep', 'Dépouillement'], ['art', 'Liste artistique'], ['pdt', 'Plan de travail'], ['fds', 'Feuilles de service'], ['bud', 'Budget']];
 let saveT = null, dirty = false;
 function setStatus(t) { const s = $('#pstat'); if (s) s.textContent = t; }
 function scheduleSave() { dirty = true; setStatus('Modifié…'); clearTimeout(saveT); saveT = setTimeout(flush, 700); }
 async function flush() {
   clearTimeout(saveT); if (!dirty || !S.project) return; dirty = false;
   const p = S.project; setStatus('Enregistrement…');
-  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, ignore: p.ignore || null, brief: p.brief || null, format: p.format || undefined } }); setStatus('Enregistré'); }
+  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, ignore: p.ignore || null, brief: p.brief || null, credits: p.credits || null, format: p.format || undefined } }); setStatus('Enregistré'); }
   catch (e) { dirty = true; setStatus('Non enregistré'); toast('Enregistrement impossible : ' + esc(e.message)); }
 }
-window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, tags: p.tags || null, format: p.format || undefined }) }); } });
+window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, tags: p.tags || null, credits: p.credits || null, format: p.format || undefined }) }); } });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 
 const mentionItems = () => projectItems(S.P, bibleOf(S.project, S.P), S.project.tags);
@@ -650,7 +651,7 @@ function renderSeriesHome() {
     return `<div class="tile eptile" data-ep="${e.id}" tabindex="0"><div class="thumb strips" style="--c:${p.color}">${sc.slice(0, 12).map(x => `<i class="sw ${cls(x)}"></i>`).join('') || '<span class="emptyep">Vide</span>'}</div>
       <div class="nm"><span class="epn">${isPub(p) ? 'Spot' : 'Ép.'} ${i + 1}</span>${esc(e.name || '')}</div><div class="meta">${sc.length} scène${sc.length > 1 ? 's' : ''}${mins ? ' · ' + Math.round(mins / 60 * 10) / 10 + ' h de tournage' : ''}</div><button class="more" data-epmenu="${e.id}" title="Options">•••</button></div>`;
   };
-  const SER = [...(isPub(p) ? [['brief', 'Brief', 'Client, message, livrables, PPM']] : []), ['canvas', 'Canvas', 'Moodboard et mind map de la série'], ['bible', 'Bible', 'Personnages, lieux, objets'], ['pdt', 'Plan de travail', 'Toute la série, glisser-déposer'], ['art', 'Liste artistique', 'Comédiens, contrats, dispos'], ['dep', 'Dépouillement', 'Tous les épisodes'], ['dec', 'Découpage', 'Plans de toute la série'], ['fds', 'Feuilles de service', 'Une par jour de tournage']];
+  const SER = [...(isPub(p) ? [['brief', 'Brief', 'Client, message, livrables, PPM']] : []), ['canvas', 'Canvas', 'Moodboard et mind map de la série'], ['bible', 'Bible', 'Personnages, lieux, objets'], ['team', 'Équipe', 'Production, réalisation, chefs de poste'], ['pdt', 'Plan de travail', 'Toute la série, glisser-déposer'], ['art', 'Liste artistique', 'Comédiens, contrats, dispos'], ['dep', 'Dépouillement', 'Tous les épisodes'], ['dec', 'Découpage', 'Plans de toute la série'], ['fds', 'Feuilles de service', 'Une par jour de tournage']];
   app.innerHTML = `<div class="shome"><header class="ftool"><a class="back" href="#/files">‹ Projets</a><h1>${esc(p.name)}</h1><span class="sbadge">${isPub(p) ? tr('Campagne') : 'Série'}</span><div class="sp"></div><button class="btn sm ghost" id="pexport">Exporter PDF</button></header>
     <section class="pad2"><h2 class="sh">${tr(unitWord(p, true))} <small>${p.episodes.length}</small></h2>
       <div class="fl-grid eps">${p.episodes.map(epTile).join('')}<button class="tile addep" data-epadd><div class="thumb blank2"><span>+</span></div><div class="nm">${tr(isPub(p) ? 'Nouveau spot' : 'Nouvel épisode')}</div></button><label class="tile addep" title="${tr('Chaque fichier devient un épisode, dans l’ordre des numéros')}"><div class="thumb blank2"><span>⇪</span></div><div class="nm">${tr(isPub(p) ? 'Importer plusieurs spots' : 'Importer plusieurs épisodes')}</div><input type="file" id="epfiles" multiple accept=".pdf,.docx,.fdx,.fountain,.txt" hidden></label></div>
@@ -714,6 +715,12 @@ function renderTab() {
     return draw(S.bsub || 'film');
   }
   if (S.tab === 'script') return renderScript(body);
+  if (S.tab === 'team') {
+    const t0 = body.scrollTop, draw = () => { body.innerHTML = renderTeam(p); };
+    draw(); body.scrollTop = t0;
+    if (!body.dataset.tmb) { body.dataset.tmb = '1'; bindTeam(body, { project: p, save: scheduleSave, refresh: () => setTimeout(() => { if (S.tab === 'team') { const t1 = body.scrollTop, f = document.activeElement?.dataset?.cr; draw(); body.scrollTop = t1; if (f) body.querySelector(`[data-cr="${f}"]`)?.focus(); } }, 0) }); }
+    return;
+  }
   if (S.tab === 'brief') {
     const t0 = body.scrollTop, draw = () => { body.innerHTML = renderBrief(p, isSeriesP(p) ? p.episodes : []); };
     draw(); body.scrollTop = t0;

@@ -103,7 +103,7 @@
       if (!sub && m === 'GET') { p.openedAt = Date.now(); save(); return json({ project: JSON.parse(JSON.stringify(p)) }); }
       if (!sub && m === 'PUT') {
         const b = body();
-        ['name', 'script', 'settings', 'edits', 'canvas', 'bible', 'episodes', 'shots', 'favorite', 'color', 'cover', 'budget', 'ai', 'invoice', 'tags', 'found', 'brief', 'ignore', 'format'].forEach(k => { if (k in b) p[k] = b[k]; });
+        ['name', 'script', 'settings', 'edits', 'canvas', 'bible', 'episodes', 'shots', 'favorite', 'color', 'cover', 'budget', 'ai', 'invoice', 'tags', 'found', 'brief', 'ignore', 'credits', 'format'].forEach(k => { if (k in b) p[k] = b[k]; });
         if ('deleted' in b) p.deletedAt = b.deleted ? Date.now() : null;
         p.updatedAt = Date.now(); save(); return json({ ok: true, updatedAt: p.updatedAt });
       }

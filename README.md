@@ -132,3 +132,6 @@ Tout nom créé par « @ » reçoit sa fiche dans la **Bible** (personnage, lieu
 
 ## Classer en sélectionnant (remplace le « @ » dans le scénario)
 Sélectionnez un mot ou un groupe de mots dans le scénario : une barre propose Rôles, Accessoires, Costumes, HMC, Véhicules, Animaux, Figuration, Cascades, Effets, Son, Lieux (les pastilles de la légende marchent aussi). Le mot prend la couleur de sa catégorie, est ajouté à la Bible et retrouvé partout où il apparaît dans le scénario. Touchez un mot surligné pour changer sa catégorie ou **Retirer** : il n'est plus surligné ni compté dans le dépouillement (liste « mots retirés » dans le panneau Éléments, avec Rétablir).
+
+## Équipe et générique (onglet « Équipe »)
+Société de production, producteur·rice, producteur·rice exécutif·ve, réalisateur·rice, 1er·e assistant·e réalisateur·rice, directeur·rice de production, régisseur·se, chef·fe op, scripte, chefs de poste… avec téléphone et e-mail. « + Ajouter une fonction » pour toute autre fonction (liste de suggestions). Les fonctions cochées **En-tête** sont imprimées en haut de chaque page des PDF, sur la couverture et dans le bloc titre du plan de travail classique. La société de production et la réalisation restent liées à Bible › Le film.

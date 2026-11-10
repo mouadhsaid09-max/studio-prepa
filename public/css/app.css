@@ -1222,3 +1222,16 @@ html[dir=rtl] .strip .p,html[dir=rtl] .sb .strip .p{text-align:start}
 .seltool .st-x{background:#fff0ef;color:#c4271c}
 .hlleg button{font-size:11.5px;padding:2px 8px}
 @media (prefers-reduced-motion:reduce){.seltool{animation:none}}
+
+/* ---------- Équipe et générique ---------- */
+.team{max-width:1100px;margin:0 auto;padding:18px 20px 60px;display:flex;flex-direction:column;gap:12px}
+.tm-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.tm-top h2{margin:0}
+.tm-k{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:11.5px;color:var(--mute)}.tm-k b{display:block;font-size:20px;color:var(--ink)}
+.tm-head{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;background:#1d1d1f;color:#fff;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600}
+.tm-head small{color:#a1a1a6;font-weight:400;margin-right:6px;font-size:11.5px}
+.tm-head em{color:#a1a1a6;font-weight:400;font-style:normal}
+.tm-tab input:not([type=checkbox]){width:100%;min-width:110px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px;background:#fff}
+.tm-tab td{vertical-align:middle}.tm-tab td.c,.tm-tab th.c{text-align:center}
+.tm-tab td:first-child{min-width:220px}
+.tm-tab input[type=checkbox]{width:16px;height:16px}

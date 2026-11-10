@@ -6,6 +6,7 @@ import { computeBudget, CURRENCIES, money } from './budget.js';
 import { shotPrompts } from './aistudio.js';
 import { STAGES, POST_GROUPS, postOf, postStats } from './aipost.js';
 import { isAI, isPub } from './formats.js';
+import { headerCredits } from './team.js';
 import { BRIEF_FIELDS, DATES as BR_DATES, APPROVALS as BR_OK } from './commercial.js';
 
 const W = 960, H = 540, M = 44, TOP = 96, BOTTOM = H - 40;
@@ -21,6 +22,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
   setDateLocale(LOCALES[lang]);
   const want = new Set(sections && sections.length ? sections : SECTIONS.map(s => s[0]));
   const P = analyse(project), set = { ...DEFAULT_SETTINGS(), ...(project.settings || {}) }, edits = project.edits || {};
+  const HC = headerCredits(project, lang);
   const items = (project.canvas && project.canvas.items) || [], links = (project.canvas && project.canvas.links) || [];
   const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: project.name, Creator: 'GOSET.ai' } });
   doc.registerFont('R', fonts.R); doc.registerFont('B', fonts.B); doc.registerFont('T', fonts.T); doc.registerFont('H', fonts.H || fonts.R);
@@ -155,8 +157,8 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
     doc.font('B').fontSize(10).fillColor(C.accent).text('DOSSIER DE PRÉPARATION', tx + 10, 74, { characterSpacing: 2 });
     doc.font('T').fontSize(40).fillColor('#ffffff').text(project.name, tx + 10, 96, { width: tw - 10 });
     let y = Math.max(doc.y + 14, 190);
-    const by = [set.prod && T('Production') + ' : ' + set.prod, set.real && T('Réalisation') + ' : ' + set.real].filter(Boolean).join('   ·   ');
-    if (by) { doc.font('R').fontSize(13).fillColor('#d1d1d6').text(by, tx + 10, y, { width: tw - 10 }); y = doc.y + 6; }
+    const by = HC.length ? HC : [set.prod && [T('Production'), set.prod], set.real && [T('Réalisation'), set.real]].filter(Boolean);
+    if (by.length) { by.slice(0, 6).forEach(([r, n]) => { doc.font('R').fontSize(9.5).fillColor('#a1a1a6').text(r.toUpperCase(), tx + 10, y, { width: 150, characterSpacing: .6, lineBreak: false }); doc.font('B').fontSize(11.5).fillColor('#ffffff').text(n, tx + 168, y - 1.5, { width: tw - 168, lineBreak: false, ellipsis: true }); y += 18; }); y += 4; }
     if (BB.film.genres.length || BB.film.format) { doc.font('B').fontSize(10).fillColor(C.accent).text([BB.film.format, ...BB.film.genres].filter(Boolean).join('  ·  ').toUpperCase(), tx + 10, y, { width: tw - 10, characterSpacing: 1 }); y = doc.y + 8; }
     if (BB.film.logline) { doc.font('R').fontSize(12).fillColor('#ffffff').text(BB.film.logline, tx + 10, y, { width: tw - 10, height: 70, ellipsis: true }); y = doc.y + 8; }
     if (span) doc.font('R').fontSize(11).fillColor('#a1a1a6').text(T('Tournage') + ' : ' + span, tx + 10, y, { width: tw - 10 });
@@ -429,7 +431,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
       let y = m + 14;
       doc.font('B').fontSize(8).fillColor('#555').text(T('PLAN DE TRAVAIL'), m + 10, y, { width: HB - 20, align: 'center', characterSpacing: 1.5 }); y += 16;
       doc.font('T').fontSize(18).fillColor('#c4271c').text(project.name.toUpperCase(), m + 10, y, { width: HB - 20, align: 'center' }); y = doc.y + 8;
-      const info = [[T('Production'), set.prod], [T('Réalisation'), set.real], [T('Début'), fdate(P.days[0].date)], [T('Fin'), fdate(P.days[P.days.length - 1].date)], [T('Jours de tournage'), String(P.days.length)], [T('Séquences'), String(P.scenes.length)], [T('Pages'), fmtE(P.scenes.reduce((a, x) => a + x.e, 0))], [T('Édité le'), fdate(new Date())]].filter(r => r[1]);
+      const info = [...(HC.length ? HC : [[T('Production'), set.prod], [T('Réalisation'), set.real]]), [T('Début'), fdate(P.days[0].date)], [T('Fin'), fdate(P.days[P.days.length - 1].date)], [T('Jours de tournage'), String(P.days.length)], [T('Séquences'), String(P.scenes.length)], [T('Pages'), fmtE(P.scenes.reduce((a, x) => a + x.e, 0))], [T('Édité le'), fdate(new Date())]].filter(r => r[1]);
       info.forEach(([k, v]) => { doc.font('R').fontSize(8).fillColor('#666').text(k, m + 14, y, { width: 100 }); doc.font('B').fontSize(8.5).fillColor('#111').text(v, m + 110, y - .5, { width: HB - 124 }); y += 14; });
       // légende des couleurs
       y = m + TOPH - 30; [['ij', 'INT JOUR'], ['ej', 'EXT JOUR'], ['in', 'INT NUIT'], ['en', 'EXT NUIT']].forEach(([k, l], i) => { const x = m + 12 + i * 58; doc.rect(x, y, 10, 10).fillAndStroke(SC[k], '#999'); doc.font('R').fontSize(6.5).fillColor('#333').text(T(l), x + 13, y + 2, { width: 46, lineBreak: false }); });
@@ -609,6 +611,17 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
     if (i === 0 && pages.cover) continue;
     doc.switchToPage(i);
     if (classicPages.has(i)) { doc.font('R').fontSize(7).fillColor('#666'); doc.text(`${project.name} · ${i + 1} / ${range.count}`, 22, doc.page.height - 16, { width: 400, lineBreak: false }); continue; }
+    // En-tête : production, réalisation et équipe principale (onglet Équipe)
+    if (HC.length) {
+      let x = W - M; const y = 16; doc.fontSize(7.5);
+      [...HC].reverse().forEach(([r, n], j) => {
+        doc.font('B'); const wn = doc.widthOfString(n); doc.font('R'); const wr = doc.widthOfString(r + ' ');
+        if (x - wn - wr < M + 160) return;
+        doc.font('B').fillColor(C.ink).text(n, x - wn, y, { lineBreak: false }); doc.font('R').fillColor(C.mute).text(r + ' ', x - wn - wr, y, { lineBreak: false });
+        x -= wn + wr + 14; if (j < HC.length - 1) doc.circle(x + 7, y + 4, 1).fill(C.mute);
+      });
+      doc.font('B').fontSize(7.5).fillColor(C.mute).text(project.name.toUpperCase(), M, 16, { width: 150, lineBreak: false, ellipsis: true, characterSpacing: .6 });
+    }
     doc.font('R').fontSize(8).fillColor(C.mute);
     doc.text(project.name, M, H - 26, { width: 400, lineBreak: false, ellipsis: true });
     doc.text(`${i + 1} / ${range.count}`, W - M - 100, H - 26, { width: 100, align: 'right', lineBreak: false });
