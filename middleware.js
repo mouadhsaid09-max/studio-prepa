@@ -21,7 +21,7 @@ export default async function middleware(request) {
   if (!code) return; // pas de code configuré : site ouvert
   const url = new URL(request.url);
   // La page d'accueil (présentation, tarifs) reste publique ; le code protège l'application.
-  if (url.pathname === '/' || url.pathname === '/index' || url.pathname === '/index.html' || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/fonts/') || url.pathname === '/robots.txt') return;
+  if (url.pathname === '/' || url.pathname === '/index' || url.pathname === '/index.html' || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/fonts/') || url.pathname === '/robots.txt' || (url.pathname === '/api/assist' && request.method === 'GET')) return; // GET = simple vérification
   const good = await tokenFor(code);
 
   if (url.pathname === '/__access' && request.method === 'POST') {
