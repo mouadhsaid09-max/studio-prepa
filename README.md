@@ -117,3 +117,8 @@ Assistant gratuit : il améliore les prompts (un plan ou tous), écrit des notes
 ## L'assistant apprend de vos résultats
 Dans « Prompts des plans », chaque plan se note **👍 Bon résultat** ou **👎 À refaire** (avec une raison). Un plan « Validé » en post-production compte comme un bon résultat.
 Dans l'onglet Assistant, **Étudier mes résultats** compare les bons et les mauvais prompts, donne un retour, et garde 3 à 6 règles. Ces règles et les meilleurs exemples sont ensuite utilisés pour améliorer tous les autres prompts (un plan ou tous). Les règles sont aussi gardées dans le navigateur pour les projets suivants.
+
+## Mentions « @ »
+Dans le scénario, tapez **@** pour appeler un personnage, un lieu ou un objet du projet (liste filtrée au fil de la frappe, ↑ ↓ Entrée). Pour plusieurs mots : `@[vieille radio]`.
+Un nom inconnu se classe tout de suite : Personnage, Lieu, Accessoire, Costume, HMC, Véhicule, Animal, Figuration, Cascade, SFX / VFX ou Son. Il apparaît alors dans le dépouillement, la Bible, la liste artistique et les feuilles de service. Le panneau « @ Éléments » liste les noms à classer et permet de changer une catégorie. Les @ disparaissent des résumés et des PDF.
+Le même « @ » marche dans l'assistant et dans les prompts du Studio IA (un personnage y devient son jeton, par exemple @yasmine).

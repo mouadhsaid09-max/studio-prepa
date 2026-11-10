@@ -13,7 +13,8 @@ import { renderAIStudio, bindAIStudio } from './aistudio.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
 import { startI18n, LANG, LANGS, LOCALES, setLang, tr } from './i18n.js';
-import { setDateLocale } from './parser.js';
+import { setDateLocale, bible as bibleOf, MENTION_CATS } from './parser.js';
+import { attachMentions, projectItems } from './mentions.js';
 setDateLocale(LOCALES[LANG]);
 
 const $ = s => document.querySelector(s);
@@ -522,12 +523,13 @@ function scheduleSave() { dirty = true; setStatus('Modifié…'); clearTimeout(s
 async function flush() {
   clearTimeout(saveT); if (!dirty || !S.project) return; dirty = false;
   const p = S.project; setStatus('Enregistrement…');
-  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, format: p.format || undefined } }); setStatus('Enregistré'); }
+  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, format: p.format || undefined } }); setStatus('Enregistré'); }
   catch (e) { dirty = true; setStatus('Non enregistré'); toast('Enregistrement impossible : ' + esc(e.message)); }
 }
-window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, format: p.format || undefined }) }); } });
+window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, tags: p.tags || null, format: p.format || undefined }) }); } });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 
+const mentionItems = () => projectItems(S.P, bibleOf(S.project, S.P), S.project.tags);
 function reanalyse(announce) {
   const prev = S.P; S.P = analyse(S.project);
   if (announce) {
@@ -652,7 +654,10 @@ function renderTab() {
   if (S.tab === 'script') return renderScript(body);
   if (S.tab === 'ai') {
     const top0 = body.scrollTop;
-    const draw = sub => { if (sub) S.aisub = sub; const t0 = body.scrollTop; body.innerHTML = renderAIStudio(p, S.P, S.aisub || 'chars'); body.scrollTop = sub ? 0 : t0; };
+    const slug = n => '@' + n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    const mopt = { items: mentionItems, create: (n, c) => { (p.tags ||= {})[n.toLowerCase()] = c; scheduleSave(); }, token: i => i.cat === 'ch' ? ((p.ai?.chars?.[i.name]?.token) || slug(i.name)) : i.name };
+    const draw = sub => { if (sub) S.aisub = sub; const t0 = body.scrollTop; body.innerHTML = renderAIStudio(p, S.P, S.aisub || 'chars'); body.scrollTop = sub ? 0 : t0;
+      body.querySelectorAll('#asstq, textarea[data-aip]').forEach(el => attachMentions(el, mopt)); };
     draw(); body.scrollTop = top0;
     if (!body.dataset.aib) {
       body.dataset.aib = '1';
@@ -813,6 +818,7 @@ function renderScript(body) {
         : clip ? `<p class="note sm cliphelp"><span>Une section par partie de la chanson :</span><code>[Refrain 0:52] EXT. PLACE - NUIT</code><span>(entre parenthèses) : ce que l’on voit</span><code>Avec : Amina, Danseurs</code><span>Le reste : les paroles. Sans lieu, une section reprend le lieu précédent.</span></p>${!text.trim() ? '<button class="btn sm ghost block2" data-cliptpl>Insérer la structure d’une chanson</button>' : ''}`
         : ['film', 'series'].includes(formatOf(p)) ? `<p class="note sm">Passez en « Série » pour organiser plusieurs épisodes dans ce projet, avec un plan de travail commun.</p>` : ''}
       </div>
+      <div class="panel mntp" id="smnt"></div>
       <details class="panel" ${innerWidth > 820 ? 'open' : ''}><summary><h2>${clip ? 'Sections' : 'Scènes'}${series ? ' · ' + esc(ep.name || '') : ''}</h2></summary><div id="slist"></div></details>
     </aside>
     <section class="sed">
@@ -825,15 +831,22 @@ function renderScript(body) {
   const refreshSide = () => {
     const P = S.P, mine = series ? P.scenes.filter(sc => sc.epId === ep.id) : P.scenes;
     $('#sstat').innerHTML = `${series ? `<b>${esc(ep.name)}</b> : ${mine.length} scènes · Série : ` : ''}${P.scenes.length} ${clip ? 'sections' : 'scènes'} · ${P.roles.length} rôles · ${P.days.length} jours — <b class="ok">synchronisé</b>${P.warns.length ? ` · <span class="warn" title="${esc(P.warns.join('\n'))}">${P.warns.length} remarque${P.warns.length > 1 ? 's' : ''}</span>` : ''}`;
+    const un = P.untagged || [], nt = Object.keys(p.tags || {}).length;
+    $('#smnt').innerHTML = `<h2>@ ${tr('Éléments')}</h2><p class="note sm">${tr('Tapez @ dans le texte pour appeler un personnage, un lieu ou un objet. Pour plusieurs mots : @[vieille radio].')}</p>`
+      + (un.length ? `<p class="mnt-warn">${tr('À classer')} :</p>${un.map(n => `<label class="mnt-row"><b data-nt>@${esc(n)}</b><select data-mtag="${esc(n)}"><option value="">${tr('Catégorie…')}</option>${MENTION_CATS.map(([c, l]) => `<option value="${c}">${tr(l)}</option>`).join('')}</select></label>`).join('')}` : '')
+      + (nt ? `<details class="mnt-list"><summary>${nt} ${tr('élément(s) classé(s)')}</summary>${Object.entries(p.tags).map(([n, c]) => `<label class="mnt-row"><b data-nt>@${esc(n)}</b><select data-mtag="${esc(n)}">${MENTION_CATS.map(([k, l]) => `<option value="${k}" ${k === c ? 'selected' : ''}>${tr(l)}</option>`).join('')}<option value="-">${tr('Retirer')}</option></select></label>`).join('')}</details>` : '');
     if (series) document.querySelectorAll('.eprow').forEach(r => { const n = P.scenes.filter(sc => sc.epId === r.dataset.ep).length; const sm = r.querySelector('small'); if (sm) sm.textContent = n + ' sc.'; });
     $('#slist').innerHTML = mine.length ? mine.map(sc => `<button class="sitem" data-line="${sc.line}" data-k="${esc(sc.k)}"><i class="sw ${cls(sc)}"></i><b>${esc(sc.sec ? sc.num : sc.num)}</b><span>${sc.sec ? `<em class="secl">${esc(sc.sec)}${sc.tc ? ' · ' + esc(sc.tc) : ''}</em> ` : ''}${esc(sc.decor)}</span><small>J${sc.day}</small></button>`).join('') : '<p class="note">Aucune scène détectée. Format attendu : « 1. INT. CUISINE - JOUR ».</p>';
   };
   refreshSide();
+  // « @ » : appeler un personnage, un lieu ou un objet ; un nouveau nom reçoit la catégorie choisie
+  attachMentions(tx, { items: mentionItems, create: (n, c) => { (p.tags ||= {})[n.toLowerCase()] = c; scheduleSave(); } });
   tx.addEventListener('input', () => {
     setText(tx.value); scheduleSave(); $('#sstat').innerHTML = 'Analyse…';
     clearTimeout(t); t = setTimeout(() => { reanalyse(true); refreshSide(); }, 600);
   });
   $('#slist').addEventListener('click', e => { const b = e.target.closest('.sitem'); if (b) goLine(+b.dataset.line); });
+  $('#smnt').addEventListener('change', e => { const n = e.target.dataset.mtag; if (n == null) return; const v = e.target.value; p.tags ||= {}; if (v === '-' || !v) delete p.tags[n.toLowerCase()]; else p.tags[n.toLowerCase()] = v; scheduleSave(); reanalyse(false); refreshSide(); });
   body.querySelector('.snav').addEventListener('click', async e => {
     if (e.target.closest('[data-cliptpl]')) { tx.value = '[Intro 0:00] EXT. LIEU - NUIT\n(Ce que l’on voit)\nAvec : Artiste\n\n[Couplet 1 0:15] INT. LIEU - JOUR\n\n\n[Refrain 0:45]\n\n\n[Couplet 2 1:15]\n\n\n[Refrain 1:45]\n\n\n[Pont 2:15]\n\n\n[Refrain final 2:35]\n\n\n[Outro 3:00]\n'; tx.dispatchEvent(new Event('input')); e.target.closest('[data-cliptpl]').remove(); tx.focus(); return; }
     const b = e.target.closest('button'); if (!b) return;

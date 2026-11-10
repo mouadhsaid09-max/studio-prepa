@@ -81,6 +81,14 @@ function detect(text, list) {
   return f.join(', ');
 }
 
+// ---------- Mentions « @ » : @Nom ou @[plusieurs mots] dans le scénario ----------
+// La catégorie (personnage, lieu, accessoire…) est choisie par l'utilisateur et gardée dans project.tags[nom en minuscules].
+export const MENTION_CATS = [['ch', 'Personnage'], ['pl', 'Lieu'], ['acc', 'Accessoire'], ['cos', 'Costume'], ['hmc', 'HMC'], ['veh', 'Véhicule'], ['ani', 'Animal'], ['fig', 'Figuration'], ['casc', 'Cascade'], ['sfx', 'SFX / VFX'], ['son', 'Son / musique']];
+const MENTION_RX = /@\[([^\]\n]{1,60})\]|@([\p{L}\p{N}][\p{L}\p{N}_'’-]{0,40})/gu;
+export const mentionsIn = text => { const out = []; String(text || '').replace(MENTION_RX, (m, a, b) => { const n = (a || b).replace(/_/g, ' ').trim(); if (n) out.push(n); return m; }); return out; };
+export const stripMentions = text => String(text || '').replace(MENTION_RX, (m, a, b) => (a || b).replace(/_/g, ' '));
+export const mentionToken = name => /[^\p{L}\p{N}_'’-]/u.test(name) ? '@[' + name + ']' : '@' + name;
+
 // Découpe un texte en scènes brutes (sans numérotation finale ni rôles)
 function rawScenes(text) {
   const L = String(text || '').replace(/\r/g, '').split('\n');
@@ -125,6 +133,8 @@ function finalize(scenes, series) {
     let k = series ? s.epId + ':' + s.localNum : s.num;
     if (seen.has(k)) { k = k + '·' + i; warns.push('Numéro de scène ' + s.num + ' en double.'); } seen.add(k); s.k = k;
     s.autoE = Math.max(1, Math.round(s.lines / 55 * 8));
+    s.mentions = [...new Set(mentionsIn(s.action.join(' ')))];
+    s.action = s.action.map(stripMentions);
     const act = s.action.join(' ');
     const first = (act.match(/^.*?[.!?](\s|$)/) || [act])[0].trim();
     s.summary = first.length > 120 ? first.slice(0, 117) + '…' : first;
@@ -273,6 +283,31 @@ export function plan(P, set, edits) {
 }
 // Transforme le plan actuel en ordre manuel (pour déplacer une scène ou une coupure)
 export const orderFromDays = days => days.flatMap((d, i) => (i ? ['|'] : []).concat(d.sc.map(s => s.k)));
+// Catégorie d'une mention : choix de l'utilisateur, sinon personnage connu ou mot du dictionnaire
+export function mentionCat(P, tags, name) {
+  const k = name.toLowerCase();
+  if (tags[k]) return tags[k];
+  if (P.roles.some(r => r.name.toLowerCase() === k)) return 'ch';
+  for (const c of Object.keys(DICT)) if (DICT[c].includes(k)) return c;
+  return null;
+}
+function applyMentions(P, tags) {
+  const un = new Set();
+  P.scenes.forEach(s => {
+    s.places = [];
+    (s.mentions || []).forEach(n => {
+      const c = mentionCat(P, tags, n) || (un.add(n), 'acc');
+      if (c === 'ch') {
+        let r = P.roles.find(x => x.name.toLowerCase() === n.toLowerCase());
+        if (!r) { r = { name: n.toUpperCase(), speak: new Set(), present: new Set(), all: [], id: P.roles.length + 1, cat: 'Silhouette', tagged: true }; P.roles.push(r); }
+        if (!r.all.includes(s.idx)) { r.all.push(s.idx); r.all.sort((a, b) => a - b); }
+        if (!s.roles.includes(r)) s.roles.push(r);
+      } else if (c === 'pl') { if (!s.places.includes(n)) s.places.push(n); }
+      else { const cur = (s.det[c] || '').split(/\s*,\s*/).filter(Boolean); if (!cur.some(x => x.toLowerCase() === n.toLowerCase())) s.det[c] = [...cur, n.toLowerCase()].join(', '); }
+    });
+  });
+  P.untagged = [...un];
+}
 export function analyse(project) {
   const set = { ...DEFAULT_SETTINGS(), ...(project.settings || {}) }, edits = project.edits || {};
   const P = parseProject(project);
@@ -285,6 +320,7 @@ export function analyse(project) {
     if (o('summary') != null) s.summary = o('summary');
     s.ovr = ['decor', 'ie', 'time', 'summary'].some(f => o(f) != null && o(f) !== '') || parseInt(edits['est.' + s.k]) > 0;
   });
+  applyMentions(P, project.tags || {});
   P.roles.forEach(r => { const c = edits['cat.' + r.name]; if (c) r.cat = c; });
   const shots = project.shots || {}; P.scenes.forEach(s => { s.shots = (shots[s.k] || []).length; });
   return plan(P, set, edits);
@@ -467,6 +503,7 @@ export function bible(project, P) {
   const chars = P.roles.map(r => ({ key: 'ch:r:' + r.name, name: r.name, auto: true, role: r, scenes: r.all.map(i => P.scenes[i].num) })).concat(custom('ch', b.chars));
   const pmap = new Map();
   P.scenes.forEach(s => { if (!pmap.has(s.dk)) pmap.set(s.dk, { key: 'pl:d:' + s.dk, name: s.dk, auto: true, scenes: [], ie: new Set() }); const p = pmap.get(s.dk); p.scenes.push(s.num); p.ie.add(s.ie); });
+  P.scenes.forEach(s => (s.places || []).forEach(n => { const k = n.toUpperCase(); if (!pmap.has(k)) pmap.set(k, { key: 'pl:d:' + k, name: k, auto: true, scenes: [], ie: new Set() }); const p = pmap.get(k); if (!p.scenes.includes(s.num)) p.scenes.push(s.num); }));
   const places = [...pmap.values()].concat(custom('pl', b.places));
   const omap = new Map();
   P.scenes.forEach(s => {
