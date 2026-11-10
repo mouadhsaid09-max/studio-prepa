@@ -584,6 +584,7 @@ async function openProject(id, tab, ep) {
   document.title = p.name + ' · GOSET.ai';
   S.tab = tabsFor(p).some(t => t[0] === tab) ? tab : 'canvas';
   app.querySelectorAll('.ptabs a').forEach(a => a.classList.toggle('on', a.dataset.t === S.tab));
+  const fab = app.querySelector('.prepai-fab'); if (fab) fab.style.display = S.tab === 'canvas' ? '' : 'none'; // Moodboard AI : seulement sur le canvas
   app.querySelector('.ptabs a.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   renderTab();
 }
@@ -604,7 +605,6 @@ function renderSeriesHome() {
       <h2 class="sh">Toute la série</h2>
       <div class="sgrid">${SER.map(([k, l, d]) => `<a class="scard" href="#/p/${p.id}/${k}"><b>${l}</b><span>${d}</span></a>`).join('')}</div>
       <p class="note">${P.scenes.length} scènes · ${P.roles.length} rôles · ${P.days.length} jours de tournage pour toute la série.</p></section></div>`;
-  mountButton(app.querySelector('.shome'));
   app.querySelector('#pexport').onclick = openExport;
   const root = app.querySelector('.shome');
   root.addEventListener('click', async ev => {
