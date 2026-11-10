@@ -1,0 +1,261 @@
+/* Thème sombre : bases écrites à la main, puis règles générées à partir de app.css */
+/* ---------- Thème sombre : bases ---------- */
+html[data-theme=dark]{color-scheme:dark;
+  --bg:#0e0e11;--card:#18181d;--ink:#ececf1;--mute:#9b9ba6;--line:#2b2b33;--line2:#3a3a44;--side:#131317;
+  --accent:#ff9f0a;--accent-ink:#141418;--blue:#4ea1ff;
+  --sh:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.35)}
+html[data-theme=dark] body{background:var(--bg);color:var(--ink)}
+html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:#121216;border-color:var(--line2);color:var(--ink)}
+html[data-theme=dark] input::placeholder,html[data-theme=dark] textarea::placeholder{color:#6d6d78}
+html[data-theme=dark] .hlwrap{background:#121216}
+html[data-theme=dark] #stxt{color:#e7e7ee}
+html[data-theme=dark] .hlback mark{filter:saturate(1.3) brightness(.62)}
+html[data-theme=dark] .hlleg button,html[data-theme=dark] .seltool button:not(.st-x){filter:brightness(.85)}
+html[data-theme=dark] .seltool,html[data-theme=dark] .mnt-pop,html[data-theme=dark] .pop{background:#1d1d23;box-shadow:0 14px 40px rgba(0,0,0,.6),0 0 0 1px #2e2e36}
+html[data-theme=dark] .toast{background:#ececf1;color:#141418}
+html[data-theme=dark] .tbl tr:nth-child(even) td{background:transparent}
+html[data-theme=dark] .strip,html[data-theme=dark] .sb-item.strip{color:#141418}
+html[data-theme=dark] .cal-g .c.sd,html[data-theme=dark] .cal-g .c.sn,html[data-theme=dark] .cal-g .c.sm{color:#141418}
+html[data-theme=dark] .cal-g .c.off{background:repeating-linear-gradient(135deg,#1c1c22 0 6px,#212128 6px 12px)}
+html[data-theme=dark] .tm-head{background:#000}
+html[data-theme=dark] .inv-sum .g{background:#000}
+html[data-theme=dark] img{color-scheme:normal}
+html[data-theme=dark] ::-webkit-scrollbar{width:10px;height:10px}html[data-theme=dark] ::-webkit-scrollbar-thumb{background:#2e2e36;border-radius:8px;border:2px solid var(--bg)}
+/* Bouton de thème */
+.thm{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--line2);background:var(--card);cursor:pointer;font-size:15px;color:var(--ink);flex:none}
+.thm:hover{border-color:var(--mute)}
+html[data-theme=dark] .btn.ghost{background:var(--card)}
+html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:var(--card)}
+html[data-theme=dark] .seg{background:#26262d}
+html[data-theme=dark] .seg button.on{background:var(--card)}
+html[data-theme=dark] .login{background:radial-gradient(1200px 600px at 20% 0%,#4a4746,transparent),radial-gradient(900px 500px at 100% 100%,#26262d,transparent),var(--bg)}
+html[data-theme=dark] .fmain{background:var(--card)}
+html[data-theme=dark] .ftool .search{background:#26262d}
+html[data-theme=dark] .tile:hover,html[data-theme=dark] .tile:focus{background:#26262d}
+html[data-theme=dark] .thumb{background:var(--card)}
+html[data-theme=dark] .thumb.strips{background:linear-gradient(180deg,#1f1f25,#26262d)}
+html[data-theme=dark] .lrow:nth-child(even):not(.head){background:#1f1f25}
+html[data-theme=dark] .lrow:hover:not(.head){background:#26262d}
+html[data-theme=dark] .modal{background:var(--card)}
+html[data-theme=dark] .modal .x{background:#26262d}
+html[data-theme=dark] .choice:has(input:checked){background:#1f1f25}
+html[data-theme=dark] .pill{background:var(--card)}
+html[data-theme=dark] .ptabs a:hover{background:#26262d}
+html[data-theme=dark] .panel{background:var(--card)}
+html[data-theme=dark] th{background:#1f1f25}
+html[data-theme=dark] .ed:focus{background:#1f1f25}
+html[data-theme=dark] .dood .T{background:#4a4745}
+html[data-theme=dark] .dood .D,html[data-theme=dark] .dood .F,html[data-theme=dark] .dood .DF{color:var(--ink)}
+html[data-theme=dark] .sheet{background:var(--card)}
+html[data-theme=dark] .sheet tr.meal td,html[data-theme=dark] .sheet tr.move td{background:#1f1f25}
+html[data-theme=dark] .sitem:hover{background:#26262d}
+html[data-theme=dark] #stxt{background:var(--card)}
+html[data-theme=dark] .board{background:#26262d}
+html[data-theme=dark] .it{background:var(--card)}
+html[data-theme=dark] .it.image{background:var(--card)}
+html[data-theme=dark] .it.scene p{color:#c7c7cf}
+html[data-theme=dark] .it.scene .chips span.mute{background:#26262d;color:#c7c7cf}
+html[data-theme=dark] .it.scene.gone{background:#1f1f25}
+html[data-theme=dark] .it.scene.gone .sch{background:#1f1f25}
+html[data-theme=dark] .knob{background:var(--card)}
+html[data-theme=dark] .tools{background:var(--card)}
+html[data-theme=dark] .tools button,html[data-theme=dark] .tools .tb{color:#c7c7cf}
+html[data-theme=dark] .tools button:hover,html[data-theme=dark] .tools .tb:hover{background:#26262d}
+html[data-theme=dark] .zoom{background:var(--card)}
+html[data-theme=dark] code{background:#26262d}
+html[data-theme=dark] .howto div{background:#1f1f25}
+html[data-theme=dark] .demob{color:var(--ink)}
+html[data-theme=dark] .bcard{background:var(--card)}
+html[data-theme=dark] .bph.pl{background-color:#142f4e}
+html[data-theme=dark] .bph.ob{background-color:#1c3f29}
+html[data-theme=dark] .bt span{color:#c7c7cf}
+html[data-theme=dark] .bmeta em{background:#4a4745}
+html[data-theme=dark] .modal .ebtm{background:var(--card)}
+html[data-theme=dark] .eprow.on{background:#4a4745}
+html[data-theme=dark] .epact button:hover:not(:disabled){background:#26262d}
+html[data-theme=dark] .alert{background:#1f1f25}
+html[data-theme=dark] .alert.soft{background:#1f1f25}
+html[data-theme=dark] .unavb{background:var(--card)}
+html[data-theme=dark] .unavb.bad{background:#1f1f25}
+html[data-theme=dark] .urow{background:#1f1f25}
+html[data-theme=dark] select.csel.st-sign,html[data-theme=dark] select.csel.st-fait,html[data-theme=dark] select.csel.st-papier,html[data-theme=dark] select.csel.st-numrique,html[data-theme=dark] select.csel.st-papiernumrique{background:#1f1f25}
+html[data-theme=dark] select.csel.st-nonsign,html[data-theme=dark] select.csel.st-non{background:#1f1f25}
+html[data-theme=dark] select.csel.st-encours,html[data-theme=dark] select.csel.st-prvu{background:#26262d}
+html[data-theme=dark] select.csel.st-faire{background:#1f1f25}
+html[data-theme=dark] .dood .U{background:repeating-linear-gradient(45deg,#26262d 0 4px,#1f1f25 4px 8px)}
+html[data-theme=dark] .dood .C{background:#4a1e20}
+html[data-theme=dark] b.bad,html[data-theme=dark] .rid.bad{background:#4a1e20}
+html[data-theme=dark] .overrow td{background:#1f1f25}
+html[data-theme=dark] .dh:hover{color:var(--ink)}
+html[data-theme=dark] .sb-head em.cf,html[data-theme=dark] .sb-break em.cf{background:#4a1e20}
+html[data-theme=dark] .prepai-fab{background:linear-gradient(135deg,#1d1d1f 0%,#1e1b19 100%)}
+html[data-theme=dark] .plog{background:#1f1f25}
+html[data-theme=dark] .spin{border:2px solid var(--line)}
+html[data-theme=dark] .thumb.series span{color:var(--ink)}
+html[data-theme=dark] .shome{background:var(--card)}
+html[data-theme=dark] .eptile .epn{color:var(--ink)}
+html[data-theme=dark] .thumb.blank2{background:#1f1f25}
+html[data-theme=dark] .scard{background:#1f1f25}
+html[data-theme=dark] .scard:hover{background:var(--card)}
+html[data-theme=dark] .epbar{background:#1f1f25}
+html[data-theme=dark] .dect .acts button{background:#26262d}
+html[data-theme=dark] .langsel{background:var(--card)}
+html[data-theme=dark] .sbpage{background:var(--card)}
+html[data-theme=dark] .sbp-frame{background:var(--card)}
+html[data-theme=dark] .sbp-frame .sbp-side{color:#c7c7cf}
+html[data-theme=dark] .sbp-empty{background:repeating-linear-gradient(135deg,#1f1f25 0 10px,#1f1f25 10px 20px)}
+html[data-theme=dark] .sbp-sub2{color:#c7c7cf}
+html[data-theme=dark] .modal.npg{background:linear-gradient(180deg,#1f1f25 0%,#1f1f25 62%,#1f1f25 100%)}
+html[data-theme=dark] .npk-o.on{background:var(--card)}
+html[data-theme=dark] .npk-eps input{background:var(--card)}
+html[data-theme=dark] .npg-name{background:var(--card)}
+html[data-theme=dark] .npg-row:hover{background:#26262d}
+html[data-theme=dark] .npg-row .rd{background:var(--card)}
+html[data-theme=dark] .npg-row.on{background:var(--card)}
+html[data-theme=dark] .npg-thumb{background:var(--card)}
+html[data-theme=dark] .npg-chip{background:var(--card)}
+html[data-theme=dark] .npg-dots button{border:2px solid var(--line)}
+html[data-theme=dark] .ink-c{border:2px solid var(--line)}
+html[data-theme=dark] .ink-s,html[data-theme=dark] .ink-b{background:var(--card)}
+html[data-theme=dark] .ink-s.on i{background:var(--card)}
+html[data-theme=dark] .ink-pad{background:var(--card)}
+html[data-theme=dark] .ink-pad.lined{background:repeating-linear-gradient(#1f1f25 0 35px,#26262d 35px 36px)}
+html[data-theme=dark] .fc{background:var(--card);border:3px solid var(--line)}
+html[data-theme=dark] .fc-script>div{color:#c7c7cf}
+html[data-theme=dark] .fc-script span.h{color:var(--ink)}
+html[data-theme=dark] .fc-script span.ph{background:#26262d}
+html[data-theme=dark] .fc-grid b{background:linear-gradient(135deg,transparent 48%,#d1d1d6 49% 51%,transparent 52%),#1f1f25}
+html[data-theme=dark] .fc-gen{background:radial-gradient(120% 70% at 50% 0%,color-mix(in srgb,var(--fc) 85%,#1f1f25) 0%,var(--fc) 35%,color-mix(in srgb,var(--fc) 35%,#000) 75%,#0b0b0c 100%)}
+html[data-theme=dark] .ff-rows b{color:var(--ink)}
+html[data-theme=dark] .ff-btn{border:2px solid var(--line)}
+html[data-theme=dark] .modal.npg.split{background:var(--card)}
+html[data-theme=dark] .cl-bar{background:repeating-linear-gradient(118deg,#4a3418 0 20px,#111 20px 40px)}
+html[data-theme=dark] .cl-stick .fr{background:repeating-linear-gradient(62deg,#1f1f25 0 20px,#111 20px 40px)}
+html[data-theme=dark] .npc-dots i.on{background:#4a3418}
+html[data-theme=dark] .btab input:focus,html[data-theme=dark] .btab select:focus{background:var(--card)}
+html[data-theme=dark] .bud .warn{background:#1f1f25}
+html[data-theme=dark] .gl{color:var(--ink)}
+html[data-theme=dark] .modal.npg.split{background:#1f1f25}
+html[data-theme=dark] .npg.split .x{border:1px solid var(--line);color:#c7c7cf}
+html[data-theme=dark] .npg.split .npk-o{background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .npg.split .npk-o:hover{border-color:var(--line)}
+html[data-theme=dark] .npg.split .npk-o.on .gl.big{color:var(--ink)}
+html[data-theme=dark] .npg.split .npk-st{border:1px solid var(--line);color:var(--ink)}
+html[data-theme=dark] .npg.split .npg-name{border-bottom:1.5px solid var(--line)}
+html[data-theme=dark] .npg.split .npg-list{border-top:1px solid var(--line)}
+html[data-theme=dark] .npg.split .npg-row{border-bottom:1px solid var(--line)}
+html[data-theme=dark] .npg.split .npg-row:hover .bd b{color:var(--ink)}
+html[data-theme=dark] .npg.split .npg-row.on .gl{color:var(--ink)}
+html[data-theme=dark] .npg.split .npg-row .rd{border:1.5px solid var(--line)}
+html[data-theme=dark] .npg.split .npg-row.on{border-color:var(--line)}
+html[data-theme=dark] .npg.split .npg-thumb{border:2px solid var(--line)}
+html[data-theme=dark] .npg.split .npg-chip:not(:has(.gl)){border-color:var(--line)}
+html[data-theme=dark] .npg.split .npg-dots button.on{box-shadow:0 0 0 2px var(--line),0 0 0 3.5px #1d1d1f}
+html[data-theme=dark] .npg.split .npg-foot .btn.ghost{color:#c7c7cf}
+html[data-theme=dark] .npg-go::after{background:#4a3418}
+html[data-theme=dark] .fc-gen{background:radial-gradient(120% 120% at 85% 0%,color-mix(in srgb,var(--fc) 90%,#1f1f25) 0%,var(--fc) 30%,color-mix(in srgb,var(--fc) 30%,#000) 72%,#0b0b0c 100%)}
+html[data-theme=dark] .ff-btn{background:var(--card)}
+html[data-theme=dark] .ff-ai{background:linear-gradient(90deg,#4a3418,#4a262d,#3a224e)}
+html[data-theme=dark] .fold.ai .fold-front::after{background:linear-gradient(90deg,transparent,#4a3418,#4a262d,#3a224e,transparent)}
+html[data-theme=dark] .sbadge.ai{background:linear-gradient(90deg,#4a3418,#4a262d,#3a224e)}
+html[data-theme=dark] .npg.split .npk-o.on{background:#1f1f25}
+html[data-theme=dark] .npg.split .npk-ai .npk-o::before{background:conic-gradient(from var(--ang,0deg),#4a3418,#4a262d,#3a224e,#262648,#4a3418)}
+html[data-theme=dark] .ai-badge{background:linear-gradient(90deg,#4a3418,#4a262d,#3a224e)}
+html[data-theme=dark] #neps.npk-eps.show{color:#c7c7cf}
+html[data-theme=dark] .clap3d.ai .cl-bar{background:repeating-linear-gradient(118deg,#4a3418 0 20px,#111 20px 40px,#3a224e 40px 60px,#111 60px 80px)}
+html[data-theme=dark] .ptabs a.ai-tab.on{background:linear-gradient(90deg,#4a3418,#4a262d,#3a224e)}
+html[data-theme=dark] .pbody.tab-ai{background:#1f1f25}
+html[data-theme=dark] .ais-tabs button{border:1px solid var(--line);background:var(--card)}
+html[data-theme=dark] .ais-char{background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .ais-ref img,html[data-theme=dark] .ais-ph{background:linear-gradient(160deg,#1f1f25,#26262d)}
+html[data-theme=dark] .ais-tok{background:#1f1f25}
+html[data-theme=dark] .ais-line{color:#c7c7cf}
+html[data-theme=dark] .ais-style{background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .ais-skill{background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .ais-sk input:hover,html[data-theme=dark] .ais-sk textarea:hover,html[data-theme=dark] .ais-sk input:focus,html[data-theme=dark] .ais-sk textarea:focus{border-color:var(--line);background:var(--card)}
+html[data-theme=dark] .sw-t i::after{background:var(--card)}
+html[data-theme=dark] .sw-t input:checked+i{background:linear-gradient(90deg,#4a3418,#4a262d)}
+html[data-theme=dark] .chip{border:1px dashed var(--line);background:var(--card)}
+html[data-theme=dark] .ais-shot{background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .ais-th img,html[data-theme=dark] .ais-th .sbp-empty{border:1px solid var(--line)}
+html[data-theme=dark] .cliphelp code{background:#1f1f25}
+html[data-theme=dark] .aip-ring{background:radial-gradient(closest-side,#1f1f25 78%,transparent 80%),conic-gradient(#4a2622 calc(var(--p)*1%),#2d224e calc(var(--p)*1%),#26262d 0)}
+html[data-theme=dark] .aip-flow i{background:#26262d}
+html[data-theme=dark] .aip-st{background:#1f1f25}
+html[data-theme=dark] .aip-st.on{background:linear-gradient(135deg,#1f1f25,#26262d)}
+html[data-theme=dark] .aip-st.on b{background:linear-gradient(90deg,#4a2622,#2d224e)}
+html[data-theme=dark] .aip-tab input,html[data-theme=dark] .aip-tab select{background:var(--card)}
+html[data-theme=dark] .aip-tab tr.aip-ok td{background:#1f1f25}
+html[data-theme=dark] .aip-g{background:var(--card)}
+html[data-theme=dark] .aip-g.law{background:linear-gradient(160deg,#1f1f25,#1f1f25)}
+html[data-theme=dark] .aip-ck i{border:1.5px solid var(--line)}
+html[data-theme=dark] .aip-ck input:checked+i{background:linear-gradient(135deg,#4a2622,#2d224e)}
+html[data-theme=dark] .aip-ck input:checked+i::after{border:2px solid var(--line)}
+html[data-theme=dark] .inv-s{border-bottom:1px solid var(--line)}
+html[data-theme=dark] .inv-img{border:1.5px dashed var(--line);background:#1f1f25}
+html[data-theme=dark] .inv-pad{background:var(--card)}
+html[data-theme=dark] .chip.ai{background:linear-gradient(135deg,#1f1f25,#26262d)}
+html[data-theme=dark] .inv-sum{background:#1f1f25}
+html[data-theme=dark] .inv-legal{color:#c7c7cf;background:#1f1f25}
+html[data-theme=dark] .asst-log{background:#1f1f25}
+html[data-theme=dark] .msg.assistant .bub{background:var(--card)}
+html[data-theme=dark] .msg .bub .li:before{background:#2d224e}
+html[data-theme=dark] .typing i{background:#3a364e}
+html[data-theme=dark] .asst-in textarea{background:var(--card)}
+html[data-theme=dark] .asst-notes{background:var(--card)}
+html[data-theme=dark] .anote{border-top:1px solid var(--line)}
+html[data-theme=dark] .anote-t{color:#c7c7cf}
+html[data-theme=dark] .alearn{background:linear-gradient(160deg,#1f1f25,#26262d)}
+html[data-theme=dark] .aln-l li{background:var(--card)}
+html[data-theme=dark] .btn.ai-grad{background:linear-gradient(135deg,#4a3023,#2d224e)}
+html[data-theme=dark] .ar{background:var(--card)}
+html[data-theme=dark] .ar:hover{border-color:var(--line)}
+html[data-theme=dark] .ar.on.g{background:#1f1f25}
+html[data-theme=dark] .ar.on.b{background:#1f1f25}
+html[data-theme=dark] .mnt-pop{background:var(--card)}
+html[data-theme=dark] .mnt-it.on,html[data-theme=dark] .mnt-it:hover{background:#26262d}
+html[data-theme=dark] .mnt-new{color:#c7c7cf}
+html[data-theme=dark] .mnt-cats button{background:var(--card)}
+html[data-theme=dark] .mnt-cats button:hover{background:#1f1f25}
+html[data-theme=dark] .mnt-row select{background:var(--card)}
+html[data-theme=dark] .hlwrap{background:var(--card)}
+html[data-theme=dark] .hlleg span{color:#c7c7cf}
+html[data-theme=dark] .cal-p{background:var(--card)}
+html[data-theme=dark] .wd{background:var(--card)}
+html[data-theme=dark] .xo{background:#1f1f25}
+html[data-theme=dark] .xo-r input{background:var(--card)}
+html[data-theme=dark] .alert.ok{background:#1f1f25}
+html[data-theme=dark] .cal-g .c{background:#1f1f25;border:1px solid var(--line)}
+html[data-theme=dark] .cal-g .c.sd{background:#4a4843}
+html[data-theme=dark] .cal-g .c.sn{background:#26262d}
+html[data-theme=dark] .cal-g .c.sm{background:linear-gradient(135deg,#4a4843 50%,#26262d 50%)}
+html[data-theme=dark] .cal-g .c.off{background:repeating-linear-gradient(135deg,#1f1f25 0 6px,#26262d 6px 12px)}
+html[data-theme=dark] .cal-g .c.xo{background:#1f1f25}
+html[data-theme=dark] .cal-g .c.prep{background:#26262d}
+html[data-theme=dark] .xs.on{background:#1f1f25}
+html[data-theme=dark] .xs-pv{border:1px solid var(--line);background:var(--card)}
+html[data-theme=dark] .xs-pv.goset i{background:#4a4432}
+html[data-theme=dark] .xs-pv.goset i:nth-child(2){background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .xs-pv.goset i:nth-child(3){background:#363e4d}
+html[data-theme=dark] .xs-pv.goset i:nth-child(4){background:#36433a}
+html[data-theme=dark] .xs-pv.classic i{background:#4a4432}
+html[data-theme=dark] .xs-pv.classic i:nth-child(2){background:var(--card);border:1px solid var(--line)}
+html[data-theme=dark] .xs-pv.classic i:nth-child(3){background:#181e34}
+html[data-theme=dark] .xs-pv.classic i:nth-child(4){background:#363e4d}
+html[data-theme=dark] .xs-pv.classic i:nth-child(5){background:#36433a}
+html[data-theme=dark] .br-kpi span{background:var(--card)}
+html[data-theme=dark] .br-card{background:var(--card)}
+html[data-theme=dark] .br-dl select,html[data-theme=dark] .br-dl input[type=date]{background:var(--card)}
+html[data-theme=dark] .br-d{border-bottom:1px dashed var(--line)}
+html[data-theme=dark] .seltool{background:var(--card)}
+html[data-theme=dark] .seltool button,html[data-theme=dark] .hlleg button{color:var(--ink)}
+html[data-theme=dark] .seltool .st-x{background:#1f1f25}
+html[data-theme=dark] .tm-k{background:var(--card)}
+html[data-theme=dark] .tm-tab input:not([type=checkbox]){background:var(--card)}
+/* contrast patches */
+html[data-theme=dark] .ftool{background:rgba(14,14,17,.88)}
+html[data-theme=dark] tr.ij td.fx,html[data-theme=dark] tr.ej td.fx,html[data-theme=dark] tr.in td.fx,html[data-theme=dark] tr.en td.fx,
+html[data-theme=dark] tr td.fx *,html[data-theme=dark] .strip,html[data-theme=dark] .strip *,html[data-theme=dark] .fxp,
+html[data-theme=dark] .it.scene .sch{color:#141418}
+html[data-theme=dark] tr.ij td:first-child,html[data-theme=dark] tr.ej td:first-child,html[data-theme=dark] tr.in td:first-child,html[data-theme=dark] tr.en td:first-child{color:#141418}
+html[data-theme=dark]{--ij:#ece4cf;--ej:#f0cf62;--in:#9fb8e6;--en:#8fcf96}

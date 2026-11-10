@@ -135,3 +135,9 @@ Sélectionnez un mot ou un groupe de mots dans le scénario : une barre propose 
 
 ## Équipe et générique (onglet « Équipe »)
 Société de production, producteur·rice, producteur·rice exécutif·ve, réalisateur·rice, 1er·e assistant·e réalisateur·rice, directeur·rice de production, régisseur·se, chef·fe op, scripte, chefs de poste… avec téléphone et e-mail. « + Ajouter une fonction » pour toute autre fonction (liste de suggestions). Les fonctions cochées **En-tête** sont imprimées en haut de chaque page des PDF, sur la couverture et dans le bloc titre du plan de travail classique. La société de production et la réalisation restent liées à Bible › Le film.
+
+## Thème sombre, profil et palmarès
+- **Mode sombre** par défaut (bouton ☾/☀ dans les en-têtes) ; le choix est gardé dans le navigateur (`goset.theme`). Styles dans `public/css/dark.css`.
+- **Exports PDF** : IBM Plex Sans Condensed pour le texte, Cormorant Garamond pour les titres, nouvelle couverture et en-têtes de tableaux sombres.
+- **Profil** (clic sur votre nom en bas de la barre latérale) : votre métier sur le plateau et votre palmarès.
+- **Distinctions discrètes** (`public/js/badges.js`) : dix jalons réels de préparation (« Nomination à l’Oscar du scénario », « Le plan tient la route », « Dossier envoyé »…), une petite carte quand l’un est atteint, sans points ni classement.

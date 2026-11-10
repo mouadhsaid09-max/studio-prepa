@@ -16,6 +16,13 @@ export function buildInvoicePdf({ PDFDocument, fonts }, inv, issuer, project) {
   const title = t[inv.type] || t.facture;
   const doc = new PDFDocument({ size: 'A4', margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: `${title} ${inv.num || ''}`.trim(), Author: issuer.name || '', Creator: 'GOSET.ai' } });
   doc.registerFont('R', fonts.R); doc.registerFont('B', fonts.B); doc.registerFont('T', fonts.T);
+  doc.registerFont('AR', fonts.AR || fonts.R); doc.registerFont('ARB', fonts.ARB || fonts.B);
+  // Chiffres alignés pour la police de titre ; arabe et symboles avec DejaVu
+  { let cur = 'R'; const _f = doc.font.bind(doc), _t = doc.text.bind(doc), FB = /[؀-ۿﭐ-﷿ﹰ-﻿✓✔⚠]/;
+    doc.font = (n, ...a) => { cur = n; return _f(n, ...a); };
+    doc.text = (s, x, y, o) => { if (x && typeof x === 'object') { o = x; x = undefined; } o = o || {}; if (cur === 'T') o = { ...o, features: ['lnum', 'kern'] };
+      const alt = FB.test(String(s ?? '')) ? (cur === 'R' ? 'AR' : 'ARB') : null; if (alt) _f(alt);
+      const r = x === undefined ? _t(s, o) : _t(s, x, y, o); if (alt) _f(cur); return r; }; }
   const fmtD = s => { if (!s) return ''; const x = new Date(s + 'T12:00:00'); return isNaN(x) ? s : x.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' }); };
   const img = (src, x, y, w, h, align = 'left') => { if (!src || !/^data:image\/(png|jpe?g);base64,/.test(src)) return 0; try { const o = doc.openImage(src), k = Math.min(w / o.width, h / o.height, 1), iw = o.width * k, ih = o.height * k; doc.image(o, align === 'right' ? x + w - iw : align === 'center' ? x + (w - iw) / 2 : x, y + (h - ih) / 2, { width: iw, height: ih }); return iw; } catch (e) { return 0; } };
 

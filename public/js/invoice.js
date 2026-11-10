@@ -182,6 +182,7 @@ export function openInvoice(o) {
           const blob = await new Promise((ok, ko) => { const ch = []; doc.on('data', c => ch.push(c)); doc.on('end', () => ok(new Blob(ch, { type: 'application/pdf' }))); doc.on('error', ko); });
           const name = `${inv.num || tr('Facture')} - ${(inv.client.name || p.name || '').replace(/[\\/:*?"<>|]+/g, '-')}.pdf`.replace(/ - \.pdf$/, '.pdf');
           const saved = await o.download(name, blob);
+          if (saved) import('./badges.js').then(m => m.award('invoice', p.name)).catch(() => {});
           if (saved !== false && inv.num === nextNum(iss, inv.type)) { const y = new Date().getFullYear(); (iss.seq ||= {})[inv.type + y] = ((iss.seq[inv.type + y]) || 1) + 1; }
           persist();
         } catch (er) { err.textContent = tr('Export impossible') + ' : ' + esc(er.message || ''); }

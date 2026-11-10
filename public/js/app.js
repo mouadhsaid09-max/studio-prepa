@@ -10,6 +10,7 @@ import { glyph } from './glyphs.js';
 import { icon } from './icons.js';
 import { FORMATS, fmt, formatOf, isAI , unitWord, isPub } from './formats.js';
 import { renderAIStudio, bindAIStudio } from './aistudio.js';
+import { award, checkProject, renderProfile, setTitle, setUser, profile } from './badges.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
 import { startI18n, LANG, LANGS, LOCALES, setLang, tr } from './i18n.js';
@@ -162,7 +163,7 @@ async function renderFiles() {
       <a href="#" data-settings><span class="ic ic-set"></span>IA (texte et images)</a>
       <a href="#" data-phone><span class="ic ic-phone"></span>Sur le téléphone</a>
       <div class="grp">Langue</div><div class="langrow"><select class="langsel" aria-label="Langue">${LANGS.map(([k, l]) => `<option value="${k}" ${k === LANG ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-      <div class="me"><span class="av">${esc((S.me.name || '?').slice(0, 1).toUpperCase())}</span><div><b>${esc(S.me.name)}</b><small>${esc(S.me.email)}</small></div><button class="link" data-logout>Déconnexion</button></div>
+      <div class="me"><button class="meb" data-profile title="${tr('Profil et palmarès')}"><span class="av">${esc((S.me.name || '?').slice(0, 1).toUpperCase())}</span><div><b>${esc(S.me.name)}</b><small>${esc((setUser(S.me.email), profile().title) ? tr(profile().title) : tr('Ajouter votre métier'))}</small></div></button><button class="link" data-logout>Déconnexion</button></div>
     </aside>
     <section class="fmain">
       <header class="ftool">
@@ -171,7 +172,7 @@ async function renderFiles() {
         <input class="search" type="search" placeholder="Rechercher" value="${esc(S.q)}">
         <div class="seg"><button data-view="grid" class="${S.view === 'grid' ? 'on' : ''}" title="Icônes">▦</button><button data-view="list" class="${S.view === 'list' ? 'on' : ''}" title="Liste">☰</button></div>
         ${S.filter !== 'recent' ? `<select class="sort"><option value="date" ${S.sort === 'date' ? 'selected' : ''}>Date</option><option value="name" ${S.sort === 'name' ? 'selected' : ''}>Nom</option></select>` : ''}
-        ${S.filter !== 'trash' ? '<button class="btn" data-new>+ Nouveau</button>' : ''}
+        ${themeBtn()}${S.filter !== 'trash' ? '<button class="btn" data-new>+ Nouveau</button>' : ''}
       </header>
       <div id="fl" class="fl-${S.view}"><div class="note pad">Chargement…</div></div>
     </section></div>`;
@@ -184,6 +185,10 @@ async function renderFiles() {
   app.querySelector('[data-settings]').onclick = e => { e.preventDefault(); fm.classList.remove('sideopen'); openSettings(); };
   app.querySelector('[data-phone]').onclick = e => { e.preventDefault(); fm.classList.remove('sideopen'); openPhone(); };
   fm.addEventListener('click', e => { if (fm.classList.contains('sideopen') && !e.target.closest('.side') && !e.target.closest('[data-side]')) fm.classList.remove('sideopen'); });
+  app.querySelector('[data-profile]').onclick = () => modal(`<div class="npg-head"><h3>${tr('Profil')}</h3><button class="x" data-close>✕</button></div>${renderProfile(S.me)}`, bg => {
+    const i = bg.querySelector('#ptitle');
+    i.addEventListener('change', () => { setTitle(i.value.trim()); bg.querySelector('.prof-h .mute').textContent = i.value.trim() || tr('Ajoutez votre métier'); const sm = app.querySelector('.meb small'); if (sm) sm.textContent = i.value.trim() || tr('Ajouter votre métier'); });
+  });
   app.querySelector('[data-logout]').onclick = async () => { await api('/api/auth/logout', { method: 'POST' }); S.me = null; nav('#/login'); };
   try { await loadList(); } catch (e) { $('#fl').innerHTML = `<div class="note pad">${esc(e.message)}</div>`; return; }
   drawList();
@@ -496,12 +501,14 @@ function openExport() {
             blob = await buildPdfBlob(S.project, sel, LANG);
             const ok = await saveFile(name, blob);
             if (!ok) { btn.disabled = false; btn.textContent = 'Créer le PDF'; return; }
+            award('pdf', S.project.name);
           } else {
             const url = `/api/projects/${S.project.id}/export.pdf?lang=${LANG}&s=${sel.join(',')}`;
             const r = await fetch(url); if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Erreur ' + r.status);
             blob = await r.blob();
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
             const o = bg.querySelector('#xopen'); o.href = url + '&view=1'; o.classList.remove('hidden');
+            award('pdf', S.project.name);
           }
           btn.textContent = 'Télécharger à nouveau'; toast(`PDF prêt (${Math.max(1, Math.round(blob.size / 1024))} Ko)`);
         } catch (e) { bg.querySelector('#xerr').textContent = 'Export impossible : ' + e.message; btn.textContent = 'Créer le PDF'; }
@@ -583,6 +590,7 @@ document.addEventListener('focusin', e => {
 });
 function reanalyse(announce) {
   const prev = S.P; S.P = analyse(S.project);
+  setTimeout(() => { try { setUser(S.me?.email); checkProject(S.project, S.P); } catch { /* distinctions facultatives */ } }, 900);
   if (announce) {
     const d = diff(prev, S.P);
     if (d) {
@@ -621,7 +629,7 @@ async function openProject(id, tab, ep) {
         <input class="pname" value="${esc(p.name)}" spellcheck="false">
         ${series ? `<select class="epsel" title="${tr(unitWord(p))}"><option value="">${tr(isPub(p) ? 'Toute la campagne' : 'Toute la série')}</option>${p.episodes.map((e, i) => `<option value="${e.id}" ${e.id === S.ep ? 'selected' : ''}>${isPub(p) ? 'Spot' : 'Ép.'} ${i + 1} · ${esc(e.name || '')}</option>`).join('')}</select>` : ''}
         <nav class="ptabs">${tabsFor(p).map(([k, l]) => `<a href="${pbase()}/${k}" data-t="${k}" class="${k === 'ai' ? 'ai-tab' : ''}">${k === 'ai' ? '✦ ' : ''}${l}</a>`).join('')}</nav>
-        <span class="pstat" id="pstat">Enregistré</span>
+        <span class="pstat" id="pstat">Enregistré</span>${themeBtn()}
         <button class="btn sm" id="pexport" title="Exporter la présentation PDF">Exporter PDF</button>
       </header>
       ${epObj ? `<div class="epbar">Ép. ${epN} · <b>${esc(epObj.name || '')}</b><span>Scénario, dépouillement et découpage de cet épisode · plan de travail commun à la série</span></div>` : ''}
@@ -652,7 +660,7 @@ function renderSeriesHome() {
       <div class="nm"><span class="epn">${isPub(p) ? 'Spot' : 'Ép.'} ${i + 1}</span>${esc(e.name || '')}</div><div class="meta">${sc.length} scène${sc.length > 1 ? 's' : ''}${mins ? ' · ' + Math.round(mins / 60 * 10) / 10 + ' h de tournage' : ''}</div><button class="more" data-epmenu="${e.id}" title="Options">•••</button></div>`;
   };
   const SER = [...(isPub(p) ? [['brief', 'Brief', 'Client, message, livrables, PPM']] : []), ['canvas', 'Canvas', 'Moodboard et mind map de la série'], ['bible', 'Bible', 'Personnages, lieux, objets'], ['team', 'Équipe', 'Production, réalisation, chefs de poste'], ['pdt', 'Plan de travail', 'Toute la série, glisser-déposer'], ['art', 'Liste artistique', 'Comédiens, contrats, dispos'], ['dep', 'Dépouillement', 'Tous les épisodes'], ['dec', 'Découpage', 'Plans de toute la série'], ['fds', 'Feuilles de service', 'Une par jour de tournage']];
-  app.innerHTML = `<div class="shome"><header class="ftool"><a class="back" href="#/files">‹ Projets</a><h1>${esc(p.name)}</h1><span class="sbadge">${isPub(p) ? tr('Campagne') : 'Série'}</span><div class="sp"></div><button class="btn sm ghost" id="pexport">Exporter PDF</button></header>
+  app.innerHTML = `<div class="shome"><header class="ftool"><a class="back" href="#/files">‹ Projets</a><h1>${esc(p.name)}</h1><span class="sbadge">${isPub(p) ? tr('Campagne') : 'Série'}</span><div class="sp"></div>${themeBtn()}<button class="btn sm ghost" id="pexport">Exporter PDF</button></header>
     <section class="pad2"><h2 class="sh">${tr(unitWord(p, true))} <small>${p.episodes.length}</small></h2>
       <div class="fl-grid eps">${p.episodes.map(epTile).join('')}<button class="tile addep" data-epadd><div class="thumb blank2"><span>+</span></div><div class="nm">${tr(isPub(p) ? 'Nouveau spot' : 'Nouvel épisode')}</div></button><label class="tile addep" title="${tr('Chaque fichier devient un épisode, dans l’ordre des numéros')}"><div class="thumb blank2"><span>⇪</span></div><div class="nm">${tr(isPub(p) ? 'Importer plusieurs spots' : 'Importer plusieurs épisodes')}</div><input type="file" id="epfiles" multiple accept=".pdf,.docx,.fdx,.fountain,.txt" hidden></label></div>
       <h2 class="sh">${tr(isPub(p) ? 'Toute la campagne' : 'Toute la série')}</h2>
@@ -857,6 +865,15 @@ function copyTable(id) { const t = document.getElementById(id); if (t) copyText(
 
 // ---------- Onglet Scénario ----------
 const epId = () => Math.random().toString(36).slice(2, 8);
+// Thème : sombre (par défaut) ou clair, gardé dans le navigateur
+function isDark() { return document.documentElement.dataset.theme === 'dark'; }
+function themeBtn() { return `<button class="thm" data-themetog title="${tr(isDark() ? 'Passer en mode clair' : 'Passer en mode sombre')}" aria-label="${tr(isDark() ? 'Passer en mode clair' : 'Passer en mode sombre')}">${isDark() ? '☀' : '☾'}</button>`; }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-themetog]'); if (!b) return;
+  const d = !isDark(); document.documentElement.dataset.theme = d ? 'dark' : 'light';
+  try { localStorage.setItem('goset.theme', d ? 'dark' : 'light'); } catch (er) { /* rien */ }
+  document.querySelectorAll('[data-themetog]').forEach(x => { x.textContent = d ? '☀' : '☾'; x.title = tr(d ? 'Passer en mode clair' : 'Passer en mode sombre'); });
+});
 const isSeriesP = p => Array.isArray(p.episodes) && p.episodes.length > 0;
 // Dépouillement complété par l'IA : le texte d'action des scènes est envoyé (avec accord) au service IA gratuit
 function aiBreakdown() {

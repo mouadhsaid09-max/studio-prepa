@@ -7,7 +7,7 @@ cp -r public/css public/js public/icons demo/site/
 cp demo/demo.js demo/site/js/demo.js
 cp node_modules/pdfkit/js/pdfkit.standalone.js demo/site/vendor/
 for f in DejaVuSansCondensed.ttf DejaVuSansCondensed-Bold.ttf DejaVuSans-Bold.ttf; do cp node_modules/dejavu-fonts-ttf/ttf/$f demo/site/fonts/; done
-cp public/fonts/Caveat.ttf demo/site/fonts/
+cp public/fonts/*.ttf public/fonts/*.woff2 demo/site/fonts/
 cat > demo/site/app.html <<'HTML'
 <!DOCTYPE html>
 <html lang="fr">
@@ -18,6 +18,8 @@ cat > demo/site/app.html <<'HTML'
 <title>GOSET.ai</title>
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/dark.css">
+<script>(function(){try{var t=localStorage.getItem('goset.theme')||'dark';var d=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light'}catch(e){document.documentElement.dataset.theme='dark'}})()</script>
 </head>
 <body>
 <div id="app"></div>

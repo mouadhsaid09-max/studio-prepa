@@ -8,7 +8,9 @@ import { buildPdfCore, SECTIONS } from './public/js/pdf-core.js';
 export { SECTIONS };
 const require = createRequire(import.meta.url);
 const FONT_DIR = path.join(path.dirname(require.resolve('dejavu-fonts-ttf/package.json')), 'ttf');
-const fonts = { R: path.join(FONT_DIR, 'DejaVuSansCondensed.ttf'), B: path.join(FONT_DIR, 'DejaVuSansCondensed-Bold.ttf'), T: path.join(FONT_DIR, 'DejaVuSans-Bold.ttf'), H: path.join(path.dirname(fileURLToPath(import.meta.url)), 'public', 'fonts', 'Caveat.ttf') };
+const PUB = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public', 'fonts');
+const fonts = { R: path.join(PUB, 'IBMPlexSansCondensed_400Regular.ttf'), B: path.join(PUB, 'IBMPlexSansCondensed_600SemiBold.ttf'), T: path.join(PUB, 'CormorantGaramond_700Bold.ttf'), I: path.join(PUB, 'CormorantGaramond_500Medium_Italic.ttf'),
+  AR: path.join(FONT_DIR, 'DejaVuSansCondensed.ttf'), ARB: path.join(FONT_DIR, 'DejaVuSansCondensed-Bold.ttf'), H: path.join(PUB, 'Caveat.ttf') };
 export function buildPdf(project, sections, assetFile, lang = 'fr') {
   const readImage = src => {
     if (/^data:image\/(png|jpe?g);base64,/.test(src)) return src;
