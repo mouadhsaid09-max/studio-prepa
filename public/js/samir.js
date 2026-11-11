@@ -8,53 +8,105 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const NAME_KEY = 'goset.botName';
 export const botName = () => { try { return (localStorage.getItem(NAME_KEY) || 'Samir').slice(0, 18); } catch { return 'Samir'; } };
 
-// ---------- Dessin (original, 120 × 120) ----------
-const Y = '#f3c234', Y2 = '#c9961a', INK = '#16171c', W = '#f4f6fa', W2 = '#c9d0db', CY = '#5ee6ff';
-function chairLegs() {
-  return `<g stroke="${INK}" stroke-width="8" stroke-linecap="round"><path d="M36 84 82 116M82 84 36 116M32 116h18M68 116h18"/></g>
-    <g stroke="${Y}" stroke-width="5" stroke-linecap="round"><path d="M36 84 82 116M82 84 36 116"/></g>
-    <g stroke="${Y2}" stroke-width="4" stroke-linecap="round"><path d="M32 116h18M68 116h18"/></g>
-    <rect x="30" y="80" width="58" height="8" rx="2" fill="${INK}"/>`;
+// ---------- Dessin (original, 120 × 120) : rendu « jouet 3D » façon sticker ----------
+// Plastique blanc ombré, visière laquée, yeux lumineux, béret en feutre, chaise en bois verni, contour noir épais.
+const OL = '#121318';
+const DEFS = `<defs>
+  <radialGradient id="smr-disc" cx="42%" cy="34%" r="70%"><stop offset="0" stop-color="#ffe066"/><stop offset=".6" stop-color="#f6c22c"/><stop offset="1" stop-color="#d99a10"/></radialGradient>
+  <radialGradient id="smr-plas" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e8edf4"/><stop offset="1" stop-color="#a9b4c4"/></radialGradient>
+  <linearGradient id="smr-plas2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9c3d1"/></linearGradient>
+  <linearGradient id="smr-visor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232a38"/><stop offset=".55" stop-color="#0c1018"/><stop offset="1" stop-color="#05070b"/></linearGradient>
+  <radialGradient id="smr-beret" cx="40%" cy="30%" r="75%"><stop offset="0" stop-color="#4a4e59"/><stop offset=".6" stop-color="#23252c"/><stop offset="1" stop-color="#0e0f13"/></radialGradient>
+  <linearGradient id="smr-wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".5" stop-color="#f4bd2a"/><stop offset="1" stop-color="#c88a0c"/></linearGradient>
+  <linearGradient id="smr-canvas" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a3d46"/><stop offset="1" stop-color="#121318"/></linearGradient>
+  <linearGradient id="smr-mega" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#e3e8ef"/><stop offset="1" stop-color="#a7b1c0"/></linearGradient>
+  <radialGradient id="smr-cy" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#d9fbff"/><stop offset=".45" stop-color="#6ff0ff"/><stop offset="1" stop-color="#19b8d6"/></radialGradient>
+  <filter id="smr-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="smr-felt" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="2" seed="4" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .22 0" result="w"/><feComposite in="w" in2="SourceGraphic" operator="in"/></filter>
+  <filter id="smr-sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.2" flood-color="#000" flood-opacity=".38"/></filter>
+</defs>`;
+const shine = (x, y, rx, ry, r = -20, o = .7) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${r} ${x} ${y})" fill="#fff" opacity="${o}"/>`;
+function legs() {
+  return `<g stroke="${OL}" stroke-width="7.5" stroke-linecap="round"><path d="M40 90 84 113M84 90 40 113M34 113h16M74 113h16"/></g>
+    <g stroke="url(#smr-wood)" stroke-width="4.6" stroke-linecap="round"><path d="M40 90 84 113M84 90 40 113"/></g>
+    <g stroke="#d69a12" stroke-width="4" stroke-linecap="round"><path d="M34 113h16M74 113h16"/></g>
+    <path d="M42 91.5 82 112" stroke="#fff4c2" stroke-width="1" stroke-linecap="round" opacity=".7"/>`;
 }
 function front() {
-  return `<svg viewBox="0 0 120 120" class="sm-svg">
-    <rect x="28" y="30" width="62" height="30" rx="3" fill="${INK}"/><g stroke="${Y}" stroke-width="4.5" stroke-linecap="round"><path d="M30 30v56M88 30v56"/></g>
-    ${chairLegs()}
-    <g class="sm-body">
-      <rect x="44" y="60" width="32" height="25" rx="10" fill="${W}" stroke="${W2}" stroke-width="1.5"/>
-      <rect x="53" y="67" width="14" height="7" rx="2.5" fill="${Y}"/>
-      <path d="M78 70q10 1 12 9" stroke="${W2}" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="90" cy="80" r="4.5" fill="${W}" stroke="${W2}" stroke-width="1.2"/>
-      <g class="sm-arm"><path d="M44 70q-9-2-13-12" stroke="${W2}" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="31" cy="57" r="4.5" fill="${W}" stroke="${W2}" stroke-width="1.2"/>
-        <g class="sm-mega"><path d="M30 55 12 44v26z" fill="${W}" stroke="${Y2}" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="12" cy="57" rx="4" ry="13" fill="${Y}" stroke="${Y2}" stroke-width="1.2"/><rect x="28" y="52" width="8" height="7" rx="2" fill="${Y}"/></g></g>
-      <g class="sm-head">
-        <circle cx="38" cy="38" r="5" fill="${W2}"/><circle cx="82" cy="38" r="5" fill="${W2}"/><circle cx="82" cy="38" r="2.6" fill="none" stroke="${CY}" stroke-width="1.6"/>
-        <rect x="38" y="20" width="44" height="38" rx="13" fill="${W}" stroke="${W2}" stroke-width="1.5"/>
-        <rect x="43" y="26" width="34" height="25" rx="9" fill="#0d1018"/>
-        <g class="sm-eyes">
-          <g class="e-idle"><rect class="blink" x="50" y="33" width="6" height="9" rx="3" fill="${CY}"/><rect class="blink" x="64" y="33" width="6" height="9" rx="3" fill="${CY}"/><path d="M55 45q5 3.5 10 0" stroke="${CY}" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>
-          <g class="e-think"><rect x="53" y="31" width="6" height="8" rx="3" fill="${CY}"/><rect x="66" y="31" width="6" height="8" rx="3" fill="${CY}"/><path d="M57 46h7" stroke="${CY}" stroke-width="1.8" stroke-linecap="round"/></g>
-          <g class="e-work"><g class="scan"><rect x="49" y="34" width="6" height="7" rx="3" fill="${CY}"/><rect x="63" y="34" width="6" height="7" rx="3" fill="${CY}"/></g><path d="M56 46q4 2 8 0" stroke="${CY}" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>
-          <g class="e-happy"><path d="M49 39q4-6 8 0M63 39q4-6 8 0" stroke="${CY}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M54 44q6 5 12 0" stroke="${CY}" stroke-width="2" fill="none" stroke-linecap="round"/></g>
-          <g class="e-wow"><circle cx="53" cy="37" r="4" fill="${CY}"/><circle cx="67" cy="37" r="4" fill="${CY}"/><circle cx="54.3" cy="35.7" r="1.2" fill="#fff"/><circle cx="68.3" cy="35.7" r="1.2" fill="#fff"/><ellipse cx="60" cy="46" rx="2.4" ry="2.8" fill="${CY}"/></g>
+  return `<svg viewBox="0 0 120 120" class="sm-svg">${DEFS}
+    <circle cx="60" cy="61" r="54" fill="url(#smr-disc)" stroke="${OL}" stroke-width="4"/>
+    <path d="M22 40a42 42 0 0 1 56-27" stroke="#fff6c8" stroke-width="3" fill="none" stroke-linecap="round" opacity=".55"/>
+    <ellipse cx="62" cy="114" rx="30" ry="4" fill="#000" opacity=".22"/>
+    <g filter="url(#smr-sh)">
+      <rect x="74" y="42" width="22" height="26" rx="2.5" fill="url(#smr-canvas)" stroke="${OL}" stroke-width="2.2"/>
+      <path d="M92 38v50" stroke="${OL}" stroke-width="7" stroke-linecap="round"/><path d="M92 38v50" stroke="url(#smr-wood)" stroke-width="4.2" stroke-linecap="round"/>
+      ${legs()}
+      <rect x="32" y="84" width="60" height="7" rx="2.5" fill="url(#smr-canvas)" stroke="${OL}" stroke-width="2.2"/>
+      <path d="M33 74h59" stroke="${OL}" stroke-width="7.5" stroke-linecap="round"/><path d="M33 74h59" stroke="url(#smr-wood)" stroke-width="4.4" stroke-linecap="round"/>
+      <path d="M36 74v11M89 74v11" stroke="${OL}" stroke-width="6" stroke-linecap="round"/><path d="M36 74v11M89 74v11" stroke="url(#smr-wood)" stroke-width="3.2" stroke-linecap="round"/>
+    </g>
+    <g class="sm-body" filter="url(#smr-sh)">
+      <rect x="47" y="60" width="32" height="26" rx="11" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2.2"/>
+      <rect x="55" y="68" width="15" height="7" rx="2.5" fill="url(#smr-wood)" stroke="${OL}" stroke-width="1.6"/>
+      ${shine(53, 65, 4, 2, -25, .8)}
+      <path d="M78 68q9 0 10 6" stroke="${OL}" stroke-width="6.5" fill="none" stroke-linecap="round"/><path d="M78 68q9 0 10 6" stroke="url(#smr-plas2)" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+      <circle cx="88" cy="75" r="5" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2"/>
+      <g class="sm-arm">
+        <path d="M48 70q-9-1-13-11" stroke="${OL}" stroke-width="6.5" fill="none" stroke-linecap="round"/><path d="M48 70q-9-1-13-11" stroke="url(#smr-plas2)" stroke-width="3.6" fill="none" stroke-linecap="round"/>
+        <g class="sm-mega">
+          <rect x="31" y="51" width="7" height="10" rx="2" fill="url(#smr-wood)" stroke="${OL}" stroke-width="1.8"/>
+          <path d="M37 50 14 39v25z" fill="url(#smr-mega)" stroke="${OL}" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M37 50 25 44.5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>
+          <ellipse cx="14" cy="51.5" rx="5" ry="13.5" fill="url(#smr-wood)" stroke="${OL}" stroke-width="2.2"/>
+          <ellipse cx="14.6" cy="51.5" rx="2.6" ry="9.5" fill="#7a5508"/><ellipse cx="13" cy="46" rx="1.2" ry="3.4" fill="#fff4c2" opacity=".8"/>
+          <path d="M37 47h3a2 2 0 0 1 0 6h-3" fill="url(#smr-wood)" stroke="${OL}" stroke-width="1.8"/>
         </g>
-        <path d="M36 22c2-11 46-13 50-2 1 4-4 5-8 4H40c-4 1-5 0-4-2z" fill="${INK}"/><circle cx="62" cy="11" r="2.6" fill="${INK}"/>
+        <circle cx="35" cy="58" r="5" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2"/>
+      </g>
+      <g class="sm-head">
+        <circle cx="38" cy="40" r="6.2" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2"/><circle cx="86" cy="40" r="6.2" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2"/>
+        <circle cx="86.6" cy="40" r="3.2" fill="none" stroke="#5ee6ff" stroke-width="1.8" filter="url(#smr-glow)"/>
+        <rect x="39" y="21" width="46" height="39" rx="14" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2.4"/>
+        <rect x="44" y="27" width="36" height="27" rx="10" fill="url(#smr-visor)" stroke="${OL}" stroke-width="1.6"/>
+        <path d="M48 30.5q14-3 28 0" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none" opacity=".22"/>
+        ${shine(46, 25, 4, 1.6, -20, .9)}
+        <g class="sm-eyes" filter="url(#smr-glow)" fill="url(#smr-cy)" stroke="none">
+          <g class="e-idle"><rect class="blink" x="52" y="34" width="7" height="10" rx="3.5"/><rect class="blink" x="65" y="34" width="7" height="10" rx="3.5"/><path d="M57 47.5q5 3.5 10 0" stroke="#6ff0ff" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+          <g class="e-think"><rect x="55" y="32" width="6.5" height="8.5" rx="3.2"/><rect x="68" y="32" width="6.5" height="8.5" rx="3.2"/><path d="M59 47.5h7" stroke="#6ff0ff" stroke-width="2" stroke-linecap="round"/></g>
+          <g class="e-work"><g class="scan"><rect x="51" y="35" width="7" height="8" rx="3.5"/><rect x="64" y="35" width="7" height="8" rx="3.5"/></g><path d="M58 47.5q4 2 8 0" stroke="#6ff0ff" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+          <g class="e-happy"><path d="M51.5 40.5q4-6.5 8 0M64.5 40.5q4-6.5 8 0" stroke="#6ff0ff" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M56 45.5q6 5.5 12 0" stroke="#6ff0ff" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
+          <g class="e-wow"><circle cx="55.5" cy="38.5" r="4.4"/><circle cx="68.5" cy="38.5" r="4.4"/><circle cx="57" cy="37" r="1.3" fill="#fff"/><circle cx="70" cy="37" r="1.3" fill="#fff"/><ellipse cx="62" cy="48" rx="2.4" ry="2.8"/></g>
+        </g>
+        <g class="sm-beret">
+          <path d="M36 25c0-12 44-17 54-6 3 4-1 7-6 7H43c-5 1-7 0-7-1z" fill="url(#smr-beret)" stroke="${OL}" stroke-width="2.4"/>
+          <path d="M36 25c0-12 44-17 54-6 3 4-1 7-6 7H43c-5 1-7 0-7-1z" filter="url(#smr-felt)" fill="#000"/>
+          <path d="M43 15q12-6 28-5" stroke="#8b90a0" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".55"/>
+          <path d="M60 10.5q1-4 4-4" stroke="${OL}" stroke-width="4.2" stroke-linecap="round" fill="none"/><path d="M60 10.5q1-4 4-4" stroke="#3b3e48" stroke-width="2" stroke-linecap="round" fill="none"/>
+        </g>
       </g>
     </g>
-    <g class="sm-fx"><g class="dots"><circle cx="92" cy="18" r="2.4"/><circle cx="99" cy="12" r="2.8"/><circle cx="107" cy="5" r="3.2"/></g>
-      <g class="spark"><path d="M98 26l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M18 22l1.4 3.4 3.4 1.4-3.4 1.4L18 31.6l-1.4-3.4-3.4-1.4 3.4-1.4z"/></g></g>
+    <g class="sm-fx"><g class="dots"><circle cx="94" cy="20" r="2.6"/><circle cx="101" cy="13" r="3"/><circle cx="109" cy="6" r="3.4"/></g>
+      <g class="spark"><path d="M99 27l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M20 22l1.4 3.4 3.4 1.4-3.4 1.4L20 31.6l-1.4-3.4-3.4-1.4 3.4-1.4z"/></g></g>
   </svg>`;
 }
 function back(name) {
   const n = esc(name.toUpperCase().slice(0, 9));
-  return `<svg viewBox="0 0 120 120" class="sm-svg">
-    <path d="M40 22c2-11 38-12 42-2 1 4-4 4-7 3H45c-4 1-6 0-5-1z" fill="${INK}"/><circle cx="61" cy="11" r="2.6" fill="${INK}"/>
-    <rect x="44" y="20" width="34" height="14" rx="6" fill="${W2}"/>
-    <rect x="26" y="30" width="68" height="32" rx="3" fill="${INK}"/>
-    <path d="M60 36l2.3 4.7 5.2.8-3.8 3.6.9 5.1-4.6-2.4-4.6 2.4.9-5.1-3.8-3.6 5.2-.8z" fill="${Y}"/>
-    <text x="60" y="58.5" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="8.5" letter-spacing=".8" fill="${Y}">${n}</text>
-    <g stroke="${Y}" stroke-width="4.5" stroke-linecap="round"><path d="M28 30v56M92 30v56"/></g>
-    <rect x="30" y="64" width="60" height="7" rx="2" fill="${Y2}"/>
-    ${chairLegs()}
+  return `<svg viewBox="0 0 120 120" class="sm-svg">${DEFS}
+    <ellipse cx="60" cy="114" rx="30" ry="4" fill="#000" opacity=".25"/>
+    <g filter="url(#smr-sh)">
+      <path d="M38 24c0-12 42-16 50-5 3 4-1 7-6 7H44c-5 1-6 0-6-2z" fill="url(#smr-beret)" stroke="${OL}" stroke-width="2.4"/>
+      <path d="M38 24c0-12 42-16 50-5 3 4-1 7-6 7H44c-5 1-6 0-6-2z" filter="url(#smr-felt)" fill="#000"/>
+      <path d="M60 10.5q1-4 4-4" stroke="${OL}" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+      <rect x="42" y="22" width="38" height="14" rx="6" fill="url(#smr-plas)" stroke="${OL}" stroke-width="2.2"/>
+      ${legs()}
+      <rect x="25" y="31" width="70" height="33" rx="3" fill="url(#smr-canvas)" stroke="${OL}" stroke-width="2.4"/>
+      <path d="M28 34.5h64M28 60.5h64" stroke="#5a5e6a" stroke-width=".8" stroke-dasharray="1.6 1.4"/>
+      <path d="M60 37l2.4 4.9 5.4.8-3.9 3.8.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.9-3.8 5.4-.8z" fill="url(#smr-wood)" stroke="${OL}" stroke-width="1.2"/>
+      <text x="60" y="58.6" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="8.6" letter-spacing=".8" fill="#f6c22c">${n}</text>
+      <path d="M27 28v62M93 28v62" stroke="${OL}" stroke-width="7.5" stroke-linecap="round"/><path d="M27 28v62M93 28v62" stroke="url(#smr-wood)" stroke-width="4.6" stroke-linecap="round"/>
+      <path d="M26 30v20M92 30v20" stroke="#fff4c2" stroke-width="1" stroke-linecap="round" opacity=".7"/>
+      <rect x="29" y="66" width="62" height="7" rx="2.5" fill="url(#smr-wood)" stroke="${OL}" stroke-width="2"/>
+    </g>
   </svg>`;
 }
 
