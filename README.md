@@ -142,7 +142,9 @@ Société de production, producteur·rice, producteur·rice exécutif·ve, réal
 - **Profil** (clic sur votre nom en bas de la barre latérale) : votre métier sur le plateau et votre palmarès.
 - **Distinctions discrètes** (`public/js/badges.js`) : dix jalons réels de préparation (« Nomination à l’Oscar du scénario », « Le plan tient la route », « Dossier envoyé »…), chacun en médaille de verre bronze, argent ou or (claquette, étoile, trophée, bobine…), avec une petite carte quand l’un est atteint, sans points ni classement.
 
-## Réalisateur IA (barre en bas du canvas)
+## Samir, le réalisateur IA (en bas à droite de chaque projet)
+Au repos on voit le dos de sa chaise ; un clic et il se retourne (yeux animés : réflexion, travail, content, épaté). Il peut être renommé (✎). Changer d’onglet referme sa fenêtre mais la demande continue en arrière-plan ; une pastille et un message préviennent quand c’est prêt. Code : `public/js/samir.js` (personnage et fenêtre), `public/js/director.js` (contexte et actions).
+
 Écrivez une demande (« fiche de Yasmine », « découpe la scène 3 », « écris la scène suivante », « palette nuit »). L’IA lit tout le projet (scénario, Bible, plans, style, notes du canvas, leçons apprises) et applique directement :
 fiches personnages (Bible + Studio IA), lieux, scénario (ajout ou réécriture), plans par scène avec prompt image et prompt vidéo pour chaque plan (Découpage + Studio IA), notes et palette sur le canvas. Chaque demande s’annule d’un clic. Code : `public/js/director.js`.
 

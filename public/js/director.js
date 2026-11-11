@@ -18,7 +18,7 @@ export const DIR_CHIPS = [
 ];
 
 // ---------- Contexte : un résumé compact de tout le projet ----------
-function context(project, P, ep) {
+export function context(project, P, ep) {
   const e = project.edits || {}, a = project.ai || {}, B = bible(project, P);
   const field = (k, f) => e[bibKey(k, f)] || '';
   const film = ['logline', 'genres', 'synopsis', 'style', 'format', 'duration'].map(f => e['film.' + f] ? `${f}: ${cut(e['film.' + f], 300)}` : '').filter(Boolean).join('\n');
@@ -38,9 +38,9 @@ function context(project, P, ep) {
     script && 'SCÉNARIO (début) :\n' + script.replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').slice(0, 5500)].filter(Boolean).join('\n\n');
 }
 
-function system(lang) {
+export function system(lang, name = 'Samir') {
   const L = { fr: 'français', en: 'English', ar: 'العربية' }[lang] || 'français';
-  return `Tu es le réalisateur IA de GOSET.ai, un assistant de préparation de film. Tu as l'œil d'un chef opérateur et la rigueur d'un 1er assistant.
+  return `Tu es ${name}, le réalisateur IA de GOSET.ai, un assistant de préparation de film. Tu as l'œil d'un chef opérateur et la rigueur d'un 1er assistant.
 Tu lis le projet ci-dessous et tu réponds UNIQUEMENT par un objet JSON :
 {"reply":"réponse courte (1 à 3 phrases) en ${L}","actions":[ ... ]}
 Actions possibles (n'en mets que si la demande l'appelle) :
@@ -55,7 +55,7 @@ Règles : reste fidèle au projet (noms, lieux, ton, style). Dans les prompts im
 }
 
 // ---------- Application des actions ----------
-function snapshot(p) { return JSON.stringify({ script: p.script, episodes: p.episodes, bible: p.bible, edits: p.edits, shots: p.shots, ai: p.ai, canvas: p.canvas }); }
+export function snapshot(p) { return JSON.stringify({ script: p.script, episodes: p.episodes, bible: p.bible, edits: p.edits, shots: p.shots, ai: p.ai, canvas: p.canvas }); }
 export function restore(p, snap) {
   const { canvas, ...rest } = JSON.parse(snap); Object.assign(p, rest);
   // le canvas ouvert garde le même objet : on remplace son contenu
@@ -131,53 +131,3 @@ export function apply(p, P, actions, o) {
   return done;
 }
 
-// ---------- Interface ----------
-export function mountDirector(host, o) {
-  const bar = document.createElement('div'); bar.className = 'dirbar';
-  bar.innerHTML = `<div class="dir-log" hidden></div>
-    <div class="dir-chips">${DIR_CHIPS.map(([l, q]) => `<button type="button" data-q="${esc(tr(q))}">${esc(tr(l))}</button>`).join('')}</div>
-    <form class="dir-f"><span class="dir-ic" aria-hidden="true">✦</span><textarea rows="1" data-nomention aria-label="${esc(tr('Demande au réalisateur IA'))}" placeholder="${esc(tr('Demandez au réalisateur IA : fiche de Yasmine, découpe la scène 3, écris la scène suivante…'))}"></textarea><button class="dir-go" type="submit">${esc(tr('Envoyer'))}</button></form>`;
-  host.appendChild(bar);
-  const log = bar.querySelector('.dir-log'), ta = bar.querySelector('textarea'), go = bar.querySelector('.dir-go'), form = bar.querySelector('form');
-  let busy = null;
-  const grow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; };
-  ta.addEventListener('input', grow);
-  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } e.stopPropagation(); });
-  ta.addEventListener('focus', () => bar.classList.add('open'));
-  bar.addEventListener('focusout', () => setTimeout(() => { if (!bar.contains(document.activeElement) && !ta.value) bar.classList.remove('open'); }, 150));
-  bar.querySelectorAll('[data-q]').forEach(b => b.onclick = () => { ta.value = b.dataset.q; grow(); ta.focus(); });
-  const onWait = e => { const s = busy && log.querySelector('.dir-st'); if (s) s.textContent = e.detail ? tr('Les IA gratuites sont saturées · nouvel essai dans {n} s').replace('{n}', e.detail) : tr('Le réalisateur IA lit le projet…'); };
-  window.addEventListener('goset:aiwait', onWait);
-  const say = html => {
-    if (log.hidden) { log.hidden = false; if (!log.querySelector('.dir-x')) log.insertAdjacentHTML('afterbegin', `<button type="button" class="dir-x" aria-label="${esc(tr('Fermer'))}">×</button>`); }
-    log.insertAdjacentHTML('beforeend', html); log.scrollTop = log.scrollHeight;
-  };
-  log.addEventListener('click', e => { if (e.target.closest('.dir-x')) log.hidden = true; });
-
-  form.onsubmit = async e => {
-    e.preventDefault();
-    if (busy) { busy.abort(); return; }
-    const q = ta.value.trim(); if (!q) return;
-    const project = o.project(), P = o.P();
-    ta.value = ''; grow(); log.querySelectorAll('.dir-undo').forEach(b => b.remove());
-    say(`<div class="dir-q">${esc(q)}</div><div class="dir-a"><span class="dir-st">${esc(tr('Le réalisateur IA lit le projet…'))}</span> <span class="spin"></span></div>`);
-    const a = log.lastElementChild; busy = new AbortController(); go.textContent = tr('Arrêter'); bar.classList.add('busy');
-    const hist = (project.ai?.dir || []).slice(-3).flatMap(h => [{ role: 'user', content: h.q }, { role: 'assistant', content: JSON.stringify({ reply: h.reply }) }]);
-    const t0 = Date.now();
-    try {
-      const raw = await o.ask([{ role: 'system', content: system(o.lang()) + '\n\n' + context(project, P, o.ep()) }, ...hist, { role: 'user', content: q }], busy.signal, { json: true });
-      let out; try { out = o.parseJSON(raw); } catch { out = { reply: String(raw || '').slice(0, 1200), actions: [] }; }
-      if (Array.isArray(out)) out = { reply: '', actions: out };
-      const snap = snapshot(project), done = apply(project, P, out.actions, { board: o.board(), ep: o.ep() });
-      (project.ai ||= {}).dir = [...(project.ai.dir || []), { q: q.slice(0, 400), reply: String(out.reply || '').slice(0, 600), n: done.length, at: Date.now() }].slice(-12);
-      o.save(); if (done.length) o.changed(done);
-      const sec = Math.round((Date.now() - t0) / 100) / 10;
-      a.innerHTML = `${out.reply ? `<p>${esc(out.reply)}</p>` : ''}${done.length ? `<ul class="dir-done">${done.map(d => `<li>✓ ${esc(d)}</li>`).join('')}</ul>` : ''}
-        <div class="dir-meta"><span>${sec} s${o.provider() ? ' · ' + esc(o.provider()) : ''}</span>${done.length ? `<button class="link dir-undo" type="button">${esc(tr('Annuler ces changements'))}</button>` : ''}</div>`;
-      a.querySelector('.dir-undo')?.addEventListener('click', ev => { restore(project, snap); o.save(); o.changed([]); ev.target.replaceWith(Object.assign(document.createElement('span'), { textContent: tr('Annulé') })); });
-    } catch (err) {
-      a.innerHTML = `<p class="dir-err">${esc(err.code === 'cancelled' || busy?.signal.aborted ? tr('Arrêté.') : (err.message || 'erreur'))}</p>`;
-    } finally { busy = null; go.textContent = tr('Envoyer'); bar.classList.remove('busy'); log.scrollTop = log.scrollHeight; }
-  };
-  return { destroy() { window.removeEventListener('goset:aiwait', onWait); busy?.abort(); bar.remove(); } };
-}

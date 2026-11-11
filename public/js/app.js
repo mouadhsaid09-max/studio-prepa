@@ -10,7 +10,7 @@ import { glyph } from './glyphs.js';
 import { icon } from './icons.js';
 import { FORMATS, fmt, formatOf, isAI , unitWord, isPub } from './formats.js';
 import { renderAIStudio, bindAIStudio } from './aistudio.js';
-import { mountDirector } from './director.js';
+import { createSamir } from './samir.js';
 import { award, checkProject, renderProfile, setTitle, setUser, profile } from './badges.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
@@ -79,7 +79,6 @@ const SLATE = `<svg viewBox="0 0 32 32" width="28" height="28"><rect x="3" y="12
 async function route() {
   const h = here();
   if (S.board) { S.board.destroy(); S.board = null; }
-  if (S.director) { S.director.destroy(); S.director = null; }
   if (!S.me) {
     try { S.me = (await api('/api/auth/me')).user; } catch { S.me = null; }
   }
@@ -90,6 +89,7 @@ async function route() {
   const f = h.match(/^#\/files(?:\/(\w+))?/);
   S.filter = (f && f[1]) || 'recent';
   if (S.project) { await flush(); S.project = null; S.P = null; }
+  samir().route(false, 'files');
   renderFiles();
 }
 
@@ -554,12 +554,29 @@ const tabsFor = p => {
 };
 const TABS = [['canvas', 'Canvas'], ['script', 'Scénario'], ['bible', 'Bible'], ['team', 'Équipe'], ['dec', 'Découpage'], ['dep', 'Dépouillement'], ['art', 'Liste artistique'], ['pdt', 'Plan de travail'], ['fds', 'Feuilles de service'], ['bud', 'Budget']];
 let saveT = null, dirty = false;
+const bodyOf = p => ({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, ignore: p.ignore || null, brief: p.brief || null, credits: p.credits || null, format: p.format || undefined });
+// Samir a fini pour un projet qui n'est plus ouvert : on l'enregistre directement
+function saveProject(p) { if (p === S.project) return scheduleSave(); api('/api/projects/' + p.id, { method: 'PUT', body: bodyOf(p) }).catch(e => toast('Enregistrement impossible : ' + esc(e.message))); }
+let SAMIR = null;
+function samir() {
+  return SAMIR ||= createSamir({
+    project: () => S.project, P: () => S.P, ep: () => S.ep, tab: () => S.tab, lang: () => LANG, board: () => S.board,
+    ask: askAI, parseJSON, provider: () => (window.__gosetProvider || ''), toast,
+    save: saveProject, moodboard: () => openAI({}),
+    changed: () => {
+      reanalyse(false);
+      if (S.tab === 'canvas' && S.board) return S.board.render();
+      const a = document.activeElement; if (a && a.closest?.('#pbody') && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return; // ne pas couper une saisie en cours
+      if ($('#pbody')) renderTab();
+    }
+  });
+}
 function setStatus(t) { const s = $('#pstat'); if (s) s.textContent = t; }
 function scheduleSave() { dirty = true; setStatus('Modifié…'); clearTimeout(saveT); saveT = setTimeout(flush, 700); }
 async function flush() {
   clearTimeout(saveT); if (!dirty || !S.project) return; dirty = false;
   const p = S.project; setStatus('Enregistrement…');
-  try { await api('/api/projects/' + p.id, { method: 'PUT', body: { name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, invoice: p.invoice || null, tags: p.tags || null, found: p.found || null, ignore: p.ignore || null, brief: p.brief || null, credits: p.credits || null, format: p.format || undefined } }); setStatus('Enregistré'); }
+  try { await api('/api/projects/' + p.id, { method: 'PUT', body: bodyOf(p) }); setStatus('Enregistré'); }
   catch (e) { dirty = true; setStatus('Non enregistré'); toast('Enregistrement impossible : ' + esc(e.message)); }
 }
 window.addEventListener('pagehide', () => { if (dirty && S.project) { const p = S.project; fetch('/api/projects/' + p.id, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: p.name, script: p.script, settings: p.settings, edits: p.edits, canvas: p.canvas, bible: p.bible || {}, episodes: p.episodes || null, shots: p.shots || {}, budget: p.budget || null, ai: p.ai || null, tags: p.tags || null, credits: p.credits || null, format: p.format || undefined }) }); } });
@@ -636,7 +653,6 @@ async function openProject(id, tab, ep) {
       </header>
       ${epObj ? `<div class="epbar">Ép. ${epN} · <b>${esc(epObj.name || '')}</b><span>Scénario, dépouillement et découpage de cet épisode · plan de travail commun à la série</span></div>` : ''}
       <div class="pbody" id="pbody"></div></div>`;
-    mountButton(app.querySelector('.proj'));
     const pn = app.querySelector('.pname');
     pn.oninput = () => { S.project.name = pn.value || 'Sans titre'; document.title = S.project.name + ' · GOSET.ai'; scheduleSave(); };
     pn.onkeydown = e => { if (e.key === 'Enter') pn.blur(); };
@@ -647,13 +663,13 @@ async function openProject(id, tab, ep) {
   document.title = p.name + ' · GOSET.ai';
   S.tab = tabsFor(p).some(t => t[0] === tab) ? tab : 'canvas';
   app.querySelectorAll('.ptabs a').forEach(a => a.classList.toggle('on', a.dataset.t === S.tab));
-  const fab = app.querySelector('.prepai-fab'); if (fab) fab.style.display = S.tab === 'canvas' ? '' : 'none'; // Moodboard AI : seulement sur le canvas
+  samir().route(true, S.tab);
   app.querySelector('.ptabs a.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   renderTab();
 }
 // ---------- Accueil d'une série : les épisodes comme des sous-dossiers ----------
 function renderSeriesHome() {
-  const p = S.project, P = S.P; S.shell = 'home'; S.ep = null;
+  const p = S.project, P = S.P; S.shell = 'home'; S.ep = null; samir().route(true, 'home');
   if (S.board) { S.board.destroy(); S.board = null; }
   document.title = p.name + ' · GOSET.ai';
   const epTile = (e, i) => {
@@ -718,13 +734,6 @@ function renderTab() {
       editScene: k => openScene(k),
       openAI: o => openAI(o),
       openInk: cb => openInk({ modal, toast, vision: askVision, onAdd: cb })
-    });
-    // Réalisateur IA : barre de commande en bas du canvas
-    S.director = mountDirector(body, {
-      project: () => S.project, P: () => S.P, ep: () => S.ep, lang: () => LANG, board: () => S.board,
-      ask: askAI, parseJSON, provider: () => (window.__gosetProvider || ''),
-      save: scheduleSave,
-      changed: () => { reanalyse(false); if (S.board) { S.board.render(); } }
     });
     return;
   }
