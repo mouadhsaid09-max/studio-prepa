@@ -23,6 +23,7 @@ const DEFS = `<defs>
   <radialGradient id="smr-cy" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#d9fbff"/><stop offset=".45" stop-color="#6ff0ff"/><stop offset="1" stop-color="#19b8d6"/></radialGradient>
   <filter id="smr-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
   <filter id="smr-felt" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="2" seed="4" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .22 0" result="w"/><feComposite in="w" in2="SourceGraphic" operator="in"/></filter>
+  <clipPath id="smr-clip"><circle cx="60" cy="61" r="52"/></clipPath>
   <filter id="smr-sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="1.6" stdDeviation="1.2" flood-color="#000" flood-opacity=".38"/></filter>
 </defs>`;
 const shine = (x, y, rx, ry, r = -20, o = .7) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" transform="rotate(${r} ${x} ${y})" fill="#fff" opacity="${o}"/>`;
@@ -34,9 +35,9 @@ function legs() {
 }
 function front() {
   return `<svg viewBox="0 0 120 120" class="sm-svg">${DEFS}
-    <circle cx="60" cy="61" r="54" fill="url(#smr-disc)" stroke="${OL}" stroke-width="4"/>
+    <circle cx="60" cy="61" r="54" fill="url(#smr-disc)"/>
     <path d="M22 40a42 42 0 0 1 56-27" stroke="#fff6c8" stroke-width="3" fill="none" stroke-linecap="round" opacity=".55"/>
-    <ellipse cx="62" cy="114" rx="30" ry="4" fill="#000" opacity=".22"/>
+    <g clip-path="url(#smr-clip)">
     <g filter="url(#smr-sh)">
       <rect x="74" y="42" width="22" height="26" rx="2.5" fill="url(#smr-canvas)" stroke="${OL}" stroke-width="2.2"/>
       <path d="M92 38v50" stroke="${OL}" stroke-width="7" stroke-linecap="round"/><path d="M92 38v50" stroke="url(#smr-wood)" stroke-width="4.2" stroke-linecap="round"/>
@@ -85,6 +86,8 @@ function front() {
         </g>
       </g>
     </g>
+    </g>
+    <circle cx="60" cy="61" r="54" fill="none" stroke="${OL}" stroke-width="4"/>
     <g class="sm-fx"><g class="dots"><circle cx="94" cy="20" r="2.6"/><circle cx="101" cy="13" r="3"/><circle cx="109" cy="6" r="3.4"/></g>
       <g class="spark"><path d="M99 27l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M20 22l1.4 3.4 3.4 1.4-3.4 1.4L20 31.6l-1.4-3.4-3.4-1.4 3.4-1.4z"/></g></g>
   </svg>`;
@@ -92,8 +95,7 @@ function front() {
 function back(name) {
   const n = esc(name.toUpperCase().slice(0, 9));
   return `<svg viewBox="0 0 120 120" class="sm-svg">${DEFS}
-    <ellipse cx="60" cy="114" rx="30" ry="4" fill="#000" opacity=".25"/>
-    <g filter="url(#smr-sh)">
+    <g clip-path="url(#smr-clip)"><g filter="url(#smr-sh)">
       <path d="M38 24c0-12 42-16 50-5 3 4-1 7-6 7H44c-5 1-6 0-6-2z" fill="url(#smr-beret)" stroke="${OL}" stroke-width="2.4"/>
       <path d="M38 24c0-12 42-16 50-5 3 4-1 7-6 7H44c-5 1-6 0-6-2z" filter="url(#smr-felt)" fill="#000"/>
       <path d="M60 10.5q1-4 4-4" stroke="${OL}" stroke-width="4.2" stroke-linecap="round" fill="none"/>
@@ -106,7 +108,8 @@ function back(name) {
       <path d="M27 28v62M93 28v62" stroke="${OL}" stroke-width="7.5" stroke-linecap="round"/><path d="M27 28v62M93 28v62" stroke="url(#smr-wood)" stroke-width="4.6" stroke-linecap="round"/>
       <path d="M26 30v20M92 30v20" stroke="#fff4c2" stroke-width="1" stroke-linecap="round" opacity=".7"/>
       <rect x="29" y="66" width="62" height="7" rx="2.5" fill="url(#smr-wood)" stroke="${OL}" stroke-width="2"/>
-    </g>
+    </g></g>
+    <circle cx="60" cy="61" r="53" fill="none" stroke="${OL}" stroke-width="2" opacity=".5"/>
   </svg>`;
 }
 
