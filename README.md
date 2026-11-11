@@ -156,3 +156,12 @@ fiches personnages (Bible + Studio IA), lieux, scénario (ajout ou réécriture)
 4. `POLLINATIONS_KEY`
 5. Pollinations sans clé (dernier recours, lent)
 Quand un service est saturé, le suivant prend le relais ; si tous le sont, l’app attend et réessaie toute seule avec un compte à rebours. `GET /api/assist?ping=1` indique les services branchés.
+
+## Moodboard de scène (onglet Découpage)
+Remplace l’ancien « Découper avec Moodboard AI ». Bouton « ✦ Moodboard des scènes » (toutes les scènes) ou « ✦ Moodboard » sur une scène.
+1. Le directeur photo IA lit les scènes, les plans et les fiches personnages, fixe une identité visuelle par personnage (âge, visage, cheveux, costume), une lumière et une palette par scène.
+2. Une image par plan du découpage (ou 4 / 6 images clés), rendu photo cinéma réaliste, storyboard ou concept art. Même graine par scène et même identité dans chaque image pour garder les visages.
+3. La planche s’affiche en haut de chaque scène (palette, lumière, images légendées) ; chaque image est aussi la vignette de son plan.
+
+### Images : services gratuits (`api/image.js`)
+Ordre d’essai selon les clés Vercel : `GEMINI_IMAGE_KEY` (Nano Banana, payant, utilise la fiche personnage comme référence) → `CF_ACCOUNT_ID` + `CF_API_TOKEN` (Cloudflare FLUX, gratuit, ~150 images/jour) → `TOGETHER_API_KEY` → `POLLINATIONS_KEY`. Sans clé : Pollinations directement depuis le navigateur. Les images sont rangées dans Vercel Blob (`BLOB_READ_WRITE_TOKEN`, déjà branché : store « goset-images »).

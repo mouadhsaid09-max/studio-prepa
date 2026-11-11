@@ -172,7 +172,7 @@ function decBoard(P, project, list) {
   let page = 0;
   return list.map(s => { const sh = shots[s.k] || []; page++; return `<section class="sbpage" id="dec-${esc(s.k)}">
     <div class="sbp-h"><h2>Storyboard</h2><div class="sbp-meta"><span>Projet</span><b class="hand" data-nt>${esc(project.name)}</b><span>Page</span><b class="hand">${page}</b></div></div>
-    <div class="sbp-sub"><span class="fxp ${cls(s)}">${esc(s.num)}</span>${s.ie} ${esc(s.timeL)} · ${esc(s.decor)}<span class="sp"></span><button class="btn sm ghost" data-dadd="${esc(s.k)}">+ Plan</button><button class="btn sm ghost" data-dai="${esc(s.k)}">✦ IA</button></div>
+    <div class="sbp-sub"><span class="fxp ${cls(s)}">${esc(s.num)}</span>${s.ie} ${esc(s.timeL)} · ${esc(s.decor)}<span class="sp"></span><button class="btn sm ghost" data-dadd="${esc(s.k)}">+ Plan</button><button class="btn sm ghost" data-mood="${esc(s.k)}">✦ Moodboard</button></div>
     <div class="sbgrid">${sh.map((x, i) => `<div class="sbp">
       <div class="sbp-cells"><span><i>Scène</i>${esc(s.num)}</span><span><i>Plan</i>${shotLabel(s, i)}</span><span><i>Format</i>${esc(ratio)}</span></div>
       <div class="sbp-frame"><em class="sbp-side hand">${esc(x.size || '')}</em>${x.img ? `<button class="sbp-img" data-dsketch="${esc(s.k)}|${x.id}" title="Redessiner"><img src="${esc(x.img)}" alt=""></button>` : `<button class="sbp-empty" data-dsketch="${esc(s.k)}|${x.id}">✎ Dessiner ce plan</button>`}${x.move && x.move !== 'Fixe' ? `<span class="sbp-move hand">${esc(x.move)} →</span>` : ''}</div>
@@ -189,12 +189,13 @@ export function renderDec(P, project, epf) {
   const sel = (k, id, f, v) => `<select class="csel" data-shot="${esc(k)}|${id}|${f}">${SHOT[f].map(o => `<option ${o === (v || '') ? 'selected' : ''} value="${esc(o)}">${o || '—'}</option>`).join('')}</select>`;
   const txt = (k, id, f, v, ph) => `<td class="ed" contenteditable="true" spellcheck="false" data-shot="${esc(k)}|${id}|${f}" data-ph="${esc(ph)}">${esc(v || '')}</td>`;
   const epBar = P.series ? `<div class="pills epf">${[['', 'Tous les épisodes'], ...P.episodes.map(e => [e.id, e.n + '. ' + e.name])].map(([id, l]) => `<button class="pill ${(epf || '') === id ? 'on' : ''}" data-epf="${id}">${esc(l)}</button>`).join('')}</div>` : '';
-  return `<div class="panel"><div class="row between"><h2>Découpage technique</h2><div class="row"><button class="btn sm" data-dai="">✦ Découper avec Moodboard AI</button><div class="seg"><button data-dview="table" class="${view === 'table' ? 'on' : ''}">Tableau</button><button data-dview="board" class="${view === 'board' ? 'on' : ''}">Planche</button></div><button class="btn sm ghost" data-print>Imprimer</button></div></div>
+  return `<div class="panel"><div class="row between"><h2>Découpage technique</h2><div class="row"><button class="btn sm" data-mood="">✦ Moodboard des scènes</button><div class="seg"><button data-dview="table" class="${view === 'table' ? 'on' : ''}">Tableau</button><button data-dview="board" class="${view === 'board' ? 'on' : ''}">Planche</button></div><button class="btn sm ghost" data-print>Imprimer</button></div></div>
   <div class="stats"><div class="stat"><b>${total}</b><span>Plans</span></div><div class="stat"><b>${done}/${list.length}</b><span>Scènes découpées</span></div><div class="stat"><b>${secs ? fmtMin(secs / 60) : '—'}</b><span>Durée à l’écran</span></div></div>
   ${epBar}<p class="note">Pour chaque scène : valeur de plan, angle, mouvement, objectif, action et son. Touchez « ✎ croquis » pour dessiner le plan. Quand une scène a un découpage, son temps de tournage est calculé d’après le nombre de plans.</p></div>
   ${view === 'board' ? decBoard(P, project, list) : list.map(s => { const sh = shots[s.k] || []; return `<section class="panel dsc" id="dec-${esc(s.k)}">
     <div class="dsh"><span class="fxp ${cls(s)}">${esc(s.num)}</span><b>${s.ie} ${esc(s.timeL)} · ${esc(s.decor)}</b><span class="m">${esc(s.summary || '')}</span>
-      <span class="sp"></span><small>${sh.length} plan${sh.length > 1 ? 's' : ''} · ${fmtMin(s.est)}</small><button class="btn sm ghost" data-dadd="${esc(s.k)}">+ Plan</button><button class="btn sm ghost" data-dai="${esc(s.k)}">✦ IA</button></div>
+      <span class="sp"></span><small>${sh.length} plan${sh.length > 1 ? 's' : ''} · ${fmtMin(s.est)}</small><button class="btn sm ghost" data-dadd="${esc(s.k)}">+ Plan</button><button class="btn sm ghost" data-mood="${esc(s.k)}">✦ Moodboard</button></div>
+    ${moodStrip(project, s)}
     ${sh.length ? `<div class="tw"><table class="dect"><thead><tr><th>Plan</th><th>Croquis</th><th>Valeur</th><th>Angle</th><th>Mouvement</th><th>Objectif</th><th>Action / description</th><th>Son / dialogue</th><th>Durée (s)</th><th></th></tr></thead><tbody>
     ${sh.map((x, i) => `<tr><td class="nw"><b>${shotLabel(s, i)}</b></td><td class="thumbc">${x.img ? `<button class="shimg" data-dsketch="${esc(s.k)}|${x.id}" title="Redessiner"><img src="${esc(x.img)}" alt=""></button>` : `<button class="link" data-dsketch="${esc(s.k)}|${x.id}">✎ croquis</button>`}</td>
       <td>${sel(s.k, x.id, 'size', x.size)}</td><td>${sel(s.k, x.id, 'angle', x.angle)}</td><td>${sel(s.k, x.id, 'move', x.move)}</td>${txt(s.k, x.id, 'lens', x.lens, '35 mm')}${txt(s.k, x.id, 'desc', x.desc, 'Ce que l’on voit')}${txt(s.k, x.id, 'sound', x.sound, 'Dialogue, son')}${txt(s.k, x.id, 'dur', x.dur, '5')}
@@ -205,6 +206,7 @@ export function renderDec(P, project, epf) {
 // ---------- Budget ----------
 import { computeBudget, CURRENCIES, UNITS, money } from './budget.js';
 import { LANG, LOCALES, tr } from './i18n.js';
+import { moodStrip } from './moodboard.js';
 export function renderBud(P, project) {
   const B = computeBudget(project, P), b = B.b, loc = LOCALES[LANG] || 'fr-FR', m = (v, c = b.cur, ex) => money(v, c, loc, ex);
   const curSel = (attr, v) => `<select ${attr}>${CURRENCIES.map(c => `<option ${c === v ? 'selected' : ''}>${c}</option>`).join('')}</select>`;

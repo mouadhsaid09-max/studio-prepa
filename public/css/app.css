@@ -1386,3 +1386,20 @@ html:not([data-theme=dark]) .sm-back{opacity:.28}
 /* les distinctions s'affichent en haut à droite, pour laisser Samir libre en bas */
 .laurel{top:calc(68px + env(safe-area-inset-top));bottom:auto;transform:translateY(-10px)}
 .laurel.on{transform:none}
+/* ---------- Moodboard de scène (Découpage) ---------- */
+.mood{margin:4px 0 12px;display:flex;flex-direction:column;gap:10px}
+.mood-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mchip{width:22px;height:22px;border-radius:6px;background:var(--c);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 1px 3px rgba(0,0,0,.3)}
+.mlight{margin-left:6px;font-size:12.5px;color:var(--mute);font-style:italic}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.mgrid figure{margin:0;border-radius:10px;overflow:hidden;background:#0d0d10;border:1px solid var(--line)}
+.mgrid img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;transition:transform .3s}
+.mgrid a:hover img{transform:scale(1.03)}
+.mgrid figcaption{padding:6px 9px 8px;font-size:12px;line-height:1.35;color:var(--mute)}
+.mgrid figcaption b{color:var(--ink);font-weight:600;margin-right:4px}
+.mb-log{max-height:240px;overflow:auto;margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(127,127,127,.08);font-size:12.5px;display:flex;flex-direction:column;gap:5px}
+.mb-log[hidden]{display:none}
+.mb-log img{height:34px;aspect-ratio:16/9;object-fit:cover;border-radius:4px;vertical-align:middle;margin:0 4px}
+.mb-log .ok{color:#3ecf8e}.mb-log .err{color:#ff8a80}.mb-log .mute{color:var(--mute)}
+@media (max-width:600px){.mgrid{grid-template-columns:1fr 1fr}.mgrid figcaption{font-size:11px}}
+#mbone[hidden]{display:none}

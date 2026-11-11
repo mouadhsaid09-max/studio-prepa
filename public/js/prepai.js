@@ -2,6 +2,7 @@
 import { esc, bible, bibKey, GENRES, isSeries, SHOT, shotLabel } from './parser.js';
 import { LANG, tr } from './i18n.js';
 import { sketchSVG, HATCH_DEFS, seedOf } from './sketch.js';
+import { makeImage } from './imagegen.js';
 const LNAME = { fr: 'français', en: 'anglais (English)', ar: 'arabe (العربية)' }[LANG] || 'français';
 
 let X; // { modal, toast, project, P, save, refresh, demo, ep(), goto }
@@ -16,7 +17,7 @@ export const SK_STYLES = {
   encre: { label: 'Encre', en: 'ink storyboard drawing, bold black brush-pen lines, high contrast, solid black shadows, white paper', paper: '#fbfaf7', disp: 1.4, blur: 0, svg: 'traits noirs épais et nets, aplats noirs pour les ombres' },
   fusain: { label: 'Fusain', en: 'charcoal sketch, smudged soft shading, rough strokes, grey toned paper, dramatic chiaroscuro', paper: '#e9e5dc', disp: 4.2, blur: 0.7, svg: 'traits larges et irréguliers, grandes masses de gris (#9a9a9a, #6d6d6d) pour les ombres' },
   aqua: { label: 'Aquarelle', en: 'watercolor storyboard sketch, light pencil underdrawing, loose transparent color washes', paper: '#fbf8f1', disp: 2.2, blur: 0.5, svg: 'contours au crayon fin, lavis de couleurs douces et transparentes (opacité 0.35 à 0.6) pour la lumière et l’ambiance' },
-  real: { label: 'Réaliste', en: 'cinematic film still, photorealistic, 35mm lens, natural light, color graded', localOnly: true }
+  real: { label: 'Réaliste', en: 'photorealistic cinematic film still, shot on ARRI Alexa, anamorphic lens, natural skin texture, realistic faces, film grain, color graded' }
 };
 const RATIOS = { '16:9': [640, 360, 1024, 576], '2.39:1': [640, 268, 1216, 512], '4:3': [640, 480, 1024, 768], '1:1': [480, 480, 1024, 1024], '9:16': [360, 640, 576, 1024] };
 const styleKey = () => { const k = LS.get('sp.skstyle'); return SK_STYLES[k] && !(SK_STYLES[k].localOnly && X.demo) ? k : 'board'; };
@@ -139,7 +140,13 @@ async function makeImages(frames, { style, ratio = '16:9', signal, onImage, onSt
     for (let i = 0; i < frames.length; i++) {
       if (signal.aborted) return;
       const f = frames[i], s = P.scenes.find(x => x.k === f.k) || P.scenes.find(x => String(x.num) === String(f.num)) || {};
-      onStatus(`Croquis ${i + 1} sur ${frames.length}…`);
+      onStatus(`Image ${i + 1} sur ${frames.length}…`);
+      // En ligne : vraie image IA (Cloudflare FLUX, Pollinations…) ; croquis dessiné dans le navigateur seulement si le service échoue
+      try {
+        const st = SK_STYLES[style] || SK_STYLES.board;
+        const r = await makeImage({ prompt: `${f.shot ? f.shot + '. ' : ''}${f.prompt}. ${st.en}`, ratio: RATIOS[ratio] ? ratio : '16:9', seed: seedOf ? seedOf(String(f.k || f.num || '') + i) % 1000000 : i, project: X.project.id, signal, onStatus: t => onStatus(`Image ${i + 1} sur ${frames.length} · ${t}`) });
+        onImage(f, r.url); continue;
+      } catch (e) { if (signal.aborted) return; }
       const pick = list => list.filter(Boolean).find(o => (f.shot || '').toLowerCase().includes(o.toLowerCase())) || '';
       const size = pick(SHOT.size) || (i % 3 === 0 ? 'Plan large' : i % 3 === 1 ? 'Plan moyen' : 'Gros plan');
       const inner = sketchSVG({ w, h, style: style === 'real' ? 'board' : style, size, angle: pick(SHOT.angle), move: pick(SHOT.move), ie: s.ie === 'EXT' ? 'EXT' : 'INT', night: !!s.night, people: (s.roles || []).length, text: [s.decor, s.summary, s.actText, f.prompt].join(' '), seed: seedOf((f.prompt || '') + i + (f.id || '')) });

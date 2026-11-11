@@ -11,6 +11,7 @@ import { icon } from './icons.js';
 import { FORMATS, fmt, formatOf, isAI , unitWord, isPub } from './formats.js';
 import { renderAIStudio, bindAIStudio } from './aistudio.js';
 import { createSamir } from './samir.js';
+import { openMoodboard } from './moodboard.js';
 import { award, checkProject, renderProfile, setTitle, setUser, profile } from './badges.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
@@ -830,6 +831,10 @@ function bindProdEvents() {
     const ds = e.target.closest('[data-dsketch]'); if (ds) { const [k, id] = ds.dataset.dsketch.split('|'); return sketchShot(k, id); }
     const dv = e.target.closest('[data-dview]'); if (dv) { try { localStorage.setItem('sp.decview', dv.dataset.dview); } catch (er) { /* rien */ } S.keepScroll = true; return renderTab(); }
     const dai = e.target.closest('[data-dai]'); if (dai) return openAI({ mode: 'dec', sceneKey: dai.dataset.dai || null });
+    const mb = e.target.closest('[data-mood]'); if (mb) return openMoodboard({
+      P: () => S.P, project: () => S.project, scenes: () => (S.P.series && S.ep ? S.P.scenes.filter(x => x.epId === S.ep) : S.P.scenes),
+      modal, toast, ask: askAI, parseJSON, save: scheduleSave, refresh: () => { if ($('#pbody')) renderTab(); }
+    }, mb.dataset.mood || null);
     const en = e.target.closest('[data-ent]'); if (en) return openEntity(en.dataset.ent, () => { reanalyse(false); renderTab(); });
     const c = e.target.closest('[data-copy]'); if (c) return copyTable(c.dataset.copy);
     const ct = e.target.closest('[data-copytext]'); if (ct) return copyText(document.getElementById(ct.dataset.copytext).innerText);
