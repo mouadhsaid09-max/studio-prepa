@@ -49,7 +49,7 @@ async function run(name, b) {
   if (name === 'cloudflare') {
     const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${e.CF_ACCOUNT_ID}/ai/run/${e.CF_IMAGE_MODEL || '@cf/black-forest-labs/flux-1-schnell'}`, {
       method: 'POST', headers: { Authorization: `Bearer ${e.CF_API_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: b.prompt.slice(0, 2000), steps: 6, seed: b.seed, width: w, height: h }), signal: AbortSignal.timeout(60000)
+      body: JSON.stringify({ prompt: `${b.prompt.slice(0, 1900)}. Wide ${b.ratio || '16:9'} cinematic framing.`, steps: 8 }), signal: AbortSignal.timeout(60000) // FLUX schnell : seulement prompt + steps (image carrée 1024)
     });
     const j = await r.json().catch(() => ({}));
     if (!j?.result?.image) return { status: r.status === 429 ? 429 : 502, error: j?.errors?.[0]?.message || 'Cloudflare : pas d’image' };
