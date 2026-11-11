@@ -45,7 +45,7 @@ html[data-theme=dark] .panel{background:var(--card)}
 html[data-theme=dark] th{background:#1f1f25}
 html[data-theme=dark] .ed:focus{background:#1f1f25}
 html[data-theme=dark] .dood .T{background:#4a4745}
-html[data-theme=dark] .dood .D,html[data-theme=dark] .dood .F,html[data-theme=dark] .dood .DF{color:var(--ink)}
+html[data-theme=dark] .dood .D,html[data-theme=dark] .dood .F,html[data-theme=dark] .dood .DF{color:#141418}
 html[data-theme=dark] .sheet{background:var(--card)}
 html[data-theme=dark] .sheet tr.meal td,html[data-theme=dark] .sheet tr.move td{background:#1f1f25}
 html[data-theme=dark] .sitem:hover{background:#26262d}
@@ -259,3 +259,21 @@ html[data-theme=dark] tr td.fx *,html[data-theme=dark] .strip,html[data-theme=da
 html[data-theme=dark] .it.scene .sch{color:#141418}
 html[data-theme=dark] tr.ij td:first-child,html[data-theme=dark] tr.ej td:first-child,html[data-theme=dark] tr.in td:first-child,html[data-theme=dark] tr.en td:first-child{color:#141418}
 html[data-theme=dark]{--ij:#ece4cf;--ej:#f0cf62;--in:#9fb8e6;--en:#8fcf96}
+html[data-theme=dark] .ptop{background:rgba(14,14,17,.9)}
+html[data-theme=dark] .btn.ghost{color:var(--ink)}
+html[data-theme=dark] .demob,html[data-theme=dark] td.D,html[data-theme=dark] td.F,html[data-theme=dark] td.DF,
+html[data-theme=dark] .it.note{color:#141418}html[data-theme=dark] .it.note .txt{color:inherit}
+html[data-theme=dark] .c.sd b,html[data-theme=dark] .c.sd span,html[data-theme=dark] .c.sn b,html[data-theme=dark] .c.sn span{color:var(--ink)}
+html[data-theme=dark] .bmeta em{color:#e0b04d}
+html[data-theme=dark] .fold-back{background:#2a2a31}
+html[data-theme=dark] .tile .more,html[data-theme=dark] .it .more,html[data-theme=dark] span.more{background:rgba(38,38,45,.92);color:var(--ink)}
+html[data-theme=dark] .board .hint{background:rgba(24,24,29,.88);color:var(--mute)}
+/* surlignages : teinte assourdie sur fond sombre */
+html[data-theme=dark] mark[class*=hl-],html[data-theme=dark] .hlleg button{background-image:linear-gradient(rgba(14,14,17,.6),rgba(14,14,17,.6));color:var(--ink)}
+html[data-theme=dark]{--ij:#d6cdb4;--ej:#dcbb52}
+html[data-theme=dark]{color-scheme:dark}
+html[data-theme=dark] .it.note[style^="background:#ffffff"],html[data-theme=dark] .it.note[style^="background:#fff;"]{background:#23232a!important;color:var(--ink)}
+/* dossier : façade en verre fumé */
+html[data-theme=dark] .fold-front{background:linear-gradient(180deg,color-mix(in srgb,var(--fc) 26%,rgba(40,40,48,.55)),color-mix(in srgb,var(--fc) 10%,rgba(22,22,27,.92)))}
+html[data-theme=dark] .fold-front::before{opacity:.28}
+html[data-theme=dark] .ff-rows b{color:#fff}html[data-theme=dark] .ff-rows span{color:#b8b8c2}

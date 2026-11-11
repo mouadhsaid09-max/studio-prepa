@@ -138,6 +138,6 @@ Société de production, producteur·rice, producteur·rice exécutif·ve, réal
 
 ## Thème sombre, profil et palmarès
 - **Mode sombre** par défaut (bouton ☾/☀ dans les en-têtes) ; le choix est gardé dans le navigateur (`goset.theme`). Styles dans `public/css/dark.css`.
-- **Exports PDF** : IBM Plex Sans Condensed pour le texte, Cormorant Garamond pour les titres, nouvelle couverture et en-têtes de tableaux sombres.
+- **Typographie « affiche de séance »** : titres en Anton (capitales condensées) dans les PDF, les vignettes de dossiers et les titres de rubriques ; texte en IBM Plex Sans Condensed.
 - **Profil** (clic sur votre nom en bas de la barre latérale) : votre métier sur le plateau et votre palmarès.
-- **Distinctions discrètes** (`public/js/badges.js`) : dix jalons réels de préparation (« Nomination à l’Oscar du scénario », « Le plan tient la route », « Dossier envoyé »…), une petite carte quand l’un est atteint, sans points ni classement.
+- **Distinctions discrètes** (`public/js/badges.js`) : dix jalons réels de préparation (« Nomination à l’Oscar du scénario », « Le plan tient la route », « Dossier envoyé »…), chacun en médaille de verre bronze, argent ou or (claquette, étoile, trophée, bobine…), avec une petite carte quand l’un est atteint, sans points ni classement.

@@ -40,9 +40,8 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
   const wrap = (str, width) => { const out = []; String(str).split('\n').forEach(par => { let cur = ''; par.split(/ +/).forEach(wd => { const t = cur ? cur + ' ' + wd : wd; if (cur && lineW(t) > width) { out.push(cur); cur = wd; } else cur = t; }); out.push(cur); }); return out; };
   doc.text = function (str, x, y, opts) {
     if (x && typeof x === 'object') { opts = x; x = undefined; y = undefined; }
-    opts = opts || {}; const s0 = T(str), s = s0 == null ? '' : String(s0);
-    if (curFont === 'T' || curFont === 'I') opts = { ...opts, features: ['lnum', 'kern', 'liga'] }; // chiffres alignés (08h00, pas 08hoo)
-    if (!AR.test(s)) {
+    opts = opts || {}; const s0 = T(str), s = s0 == null ? '' : (curFont === 'T' ? String(s0).toUpperCase() : String(s0)); // titres en capitales condensées (Anton)
+        if (!AR.test(s)) {
       if (FALL.test(s) && fb()) { const keep = curFont; _font(fb()); const r = x === undefined ? _text(s, opts) : _text(s, x, y, opts); _font(keep); return r; }
       return x === undefined ? _text(s, opts) : _text(s, x, y, opts);
     }
@@ -58,8 +57,8 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
     doc.x = X0; doc.y = Y0 + lines.length * lh; return doc;
     } finally { _font(keepF); }
   };
-  doc.heightOfString = (str, opts = {}) => { const s = String(T(str) ?? ''); return AR.test(s) ? wrap(s, opts.width ?? 400).length * (doc.currentLineHeight(true) + (opts.lineGap || 0)) : _h(s, opts); };
-  doc.widthOfString = (str, opts) => { const s = String(T(str) ?? ''); return AR.test(s) ? lineW(s) : _w(s, opts); };
+  doc.heightOfString = (str, opts = {}) => { const s = curFont === 'T' ? String(T(str) ?? '').toUpperCase() : String(T(str) ?? ''); return AR.test(s) ? wrap(s, opts.width ?? 400).length * (doc.currentLineHeight(true) + (opts.lineGap || 0)) : _h(s, opts); };
+  doc.widthOfString = (str, opts) => { const s = curFont === 'T' ? String(T(str) ?? '').toUpperCase() : String(T(str) ?? ''); return AR.test(s) ? lineW(s) : _w(s, opts); };
 
   // ---------- Images ----------
   const imgCache = new Map();
@@ -86,9 +85,9 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
   function slide(title, kicker) {
     doc.addPage();
     doc.rect(0, 0, W, H).fill('#ffffff');
-    // En-tête de diapositive : rubrique en capitales espacées, titre en Cormorant, filet fin
+    // En-tête de diapositive : rubrique en capitales espacées, titre en Anton (capitales condensées), filet fin
     if (kicker) doc.font('B').fontSize(7.5).fillColor(C.accent).text(T(kicker).toUpperCase(), M, 36, { characterSpacing: 2.2, lineBreak: false });
-    doc.font('T').fontSize(27).fillColor(C.ink).text(title, M, 47, { width: W - 2 * M, lineBreak: false, ellipsis: true });
+    doc.font('T').fontSize(25).fillColor(C.ink).text(title, M, 48, { width: W - 2 * M, lineBreak: false, ellipsis: true });
     doc.moveTo(M, 84).lineTo(W - M, 84).lineWidth(.6).strokeColor(C.line).stroke();
     doc.rect(M, 83.4, 34, 1.8).fill(C.ink);
     return TOP;
@@ -168,7 +167,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
     if (hero) { drawImg(hero.src, W * .52, 0, W * .48, H, 'cover'); doc.save().rect(W * .52, 0, 60, H).fillOpacity(.35).fill(C.ink).restore(); }
     doc.rect(M, 72, 1.5, 150).fill(C.gold);
     doc.font('B').fontSize(8.5).fillColor(C.gold).text(T('DOSSIER DE PRÉPARATION'), tx + 10, 74, { characterSpacing: 3.2 });
-    doc.font('T').fontSize(52).fillColor('#ffffff').text(project.name, tx + 10, 90, { width: tw - 10, lineGap: -6 });
+    doc.font('T').fontSize(64).fillColor('#ffffff').text(project.name, tx + 10, 84, { width: tw - 10, lineGap: -10 });
     let y = Math.max(doc.y + 14, 190);
     const by = HC.length ? HC : [set.prod && [T('Production'), set.prod], set.real && [T('Réalisation'), set.real]].filter(Boolean);
     if (by.length) { by.slice(0, 6).forEach(([r, n]) => { doc.font('R').fontSize(9.5).fillColor('#a1a1a6').text(r.toUpperCase(), tx + 10, y, { width: 150, characterSpacing: .6, lineBreak: false }); doc.font('B').fontSize(11.5).fillColor('#ffffff').text(n, tx + 168, y - 1.5, { width: tw - 168, lineBreak: false, ellipsis: true }); y += 18; }); y += 4; }
@@ -225,7 +224,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
       F.genres.forEach(g => { const w = doc.widthOfString(g.toUpperCase()) + 18; doc.roundedRect(gx, f.y, w, 18, 9).fill(C.ink); doc.fillColor('#fff').text(g.toUpperCase(), gx + 9, f.y + 5, { lineBreak: false }); gx += w + 6; });
       f.y += 30;
     }
-    if (F.logline) { doc.font('T').fontSize(17); const h = doc.heightOfString(F.logline, { width: W - 2 * M }); f.ensure(h); doc.fillColor(C.ink).text(F.logline, M, f.y, { width: W - 2 * M }); f.y = doc.y + 14; }
+    if (F.logline) { doc.font('I').fontSize(15); const h = doc.heightOfString(F.logline, { width: W - 2 * M }); f.ensure(h); doc.fillColor(C.ink).text(F.logline, M, f.y, { width: W - 2 * M }); f.y = doc.y + 14; }
     if (P.series) {
       f.ensure(30); doc.font('B').fontSize(7).fillColor(C.mute).text('ÉPISODES', M, f.y, { characterSpacing: .8 }); f.y += 11;
       doc.font('R').fontSize(11).fillColor(C.ink).text(P.episodes.map(e => `${e.n}. ${e.name} (${P.scenes.filter(s => s.epId === e.id).length} séq.)`).join('    ·    '), M, f.y, { width: W - 2 * M }); f.y = doc.y + 14;

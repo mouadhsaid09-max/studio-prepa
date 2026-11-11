@@ -20,7 +20,7 @@ export function buildInvoicePdf({ PDFDocument, fonts }, inv, issuer, project) {
   // Chiffres alignés pour la police de titre ; arabe et symboles avec DejaVu
   { let cur = 'R'; const _f = doc.font.bind(doc), _t = doc.text.bind(doc), FB = /[؀-ۿﭐ-﷿ﹰ-﻿✓✔⚠]/;
     doc.font = (n, ...a) => { cur = n; return _f(n, ...a); };
-    doc.text = (s, x, y, o) => { if (x && typeof x === 'object') { o = x; x = undefined; } o = o || {}; if (cur === 'T') o = { ...o, features: ['lnum', 'kern'] };
+    doc.text = (s, x, y, o) => { if (x && typeof x === 'object') { o = x; x = undefined; } o = o || {}; if (cur === 'T') s = String(s ?? '').toUpperCase();
       const alt = FB.test(String(s ?? '')) ? (cur === 'R' ? 'AR' : 'ARB') : null; if (alt) _f(alt);
       const r = x === undefined ? _t(s, o) : _t(s, x, y, o); if (alt) _f(cur); return r; }; }
   const fmtD = s => { if (!s) return ''; const x = new Date(s + 'T12:00:00'); return isNaN(x) ? s : x.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' }); };

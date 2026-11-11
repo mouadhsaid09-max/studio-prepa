@@ -139,7 +139,7 @@ function folder(p) {
   const lk = l => /^(\[|\d+[A-Z]?[.\s)]|INT|EXT|I\/E|SÉQ|SEQ|SC[ÈE]NE|داخلي|خارجي|مشهد)/i.test(l) ? 'h' : /^[A-ZÀ-Ý0-9'’ .()-]{2,30}$/.test(l) ? 'c' : '';
   const script = `<div class="fc fc-script"><i class="fc-lab">${SCN}</i><div data-nt dir="auto">${lines.length ? lines.map(l => `<span class="${lk(l)}">${esc(l)}</span>`).join('') : '<span class="ph"></span>'.repeat(10)}</div></div>`;
   const dec = `<div class="fc fc-dec"><i class="fc-lab">${tr('Découpage')}</i><div class="fc-grid">${[0, 1, 2, 3].map(i => shots[i] ? `<img src="${esc(shots[i])}" alt="" loading="lazy">` : '<b></b>').join('')}</div></div>`;
-  const poster = `<div class="fc fc-poster">${pv.cover ? `<img src="${esc(pv.cover)}" alt="" loading="lazy">` : `<div class="fc-gen"><small>${esc(tr(F.short))}</small><b data-nt dir="auto">${esc(p.name)}</b></div>`}</div>`;
+  const poster = `<div class="fc fc-poster">${pv.cover ? `<img src="${esc(pv.cover)}" alt="" loading="lazy">` : `<div class="fc-gen"><small class="yr">${new Date(p.createdAt || p.updatedAt || Date.now()).getFullYear()}</small><b data-nt dir="auto">${esc(p.name)}</b><small>${esc(tr(F.short))}</small></div>`}</div>`;
   const rows = [[SCN, `${p.sceneCount || 0} ${tr(clip ? (p.sceneCount === 1 ? 'section' : 'sections') : p.sceneCount === 1 ? 'scène' : 'scènes')}`], [tr('Découpage'), `${p.shotCount || 0} ${tr('plans')}`], serie ? [tr(F.label), `${p.episodes} ${tr('épisodes')}`] : [tr(F.label), ago(p.updatedAt)]];
   return `<div class="fold ${F.ai ? 'ai' : ''}" style="--fc:${esc(p.color || '#ff9f0a')}"><div class="fold-back"></div>${script}${dec}${poster}<div class="fold-front"><div class="ff-rows">${rows.map(([a, b]) => `<div><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join('')}</div><span class="ff-btn">${icon(F.icon, 30)}</span>${F.ai ? '<span class="ff-ai">IA</span>' : ''}</div></div>`;
 }
@@ -262,7 +262,7 @@ async function uploadCover(pid, blobOrSrc) {
   const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'envoi impossible');
   return j.url;
 }
-const coverHTML = (src, color, name, kind) => src ? `<img src="${esc(src)}" alt="">` : `<div class="fc-gen" style="--fc:${color}"><small>${tr(fmt(kind).short)}</small><b data-nt dir="auto">${esc(name || tr('Sans titre'))}</b></div>`;
+const coverHTML = (src, color, name, kind) => src ? `<img src="${esc(src)}" alt="">` : `<div class="fc-gen" style="--fc:${color}"><small class="yr">${new Date().getFullYear()}</small><b data-nt dir="auto">${esc(name || tr('Sans titre'))}</b><small>${tr(fmt(kind).short)}</small></div>`;
 const EMO = n => glyph({ 'sparkles': 'blank', 'open-file-folder': 'import', 'popcorn': 'sample', 'framed-picture': 'image', 'clapper-board': 'film', 'television': 'series' }[n] || n);
 // Panneau cinéma : clap 3D animé, citations de cinéastes
 function cinemaPanel() {
