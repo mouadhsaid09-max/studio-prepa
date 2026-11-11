@@ -42,15 +42,27 @@ export function parseJSON(text) {
   throw new Error('réponse illisible');
 }
 // Version en ligne (Vercel) : relais vers l'IA texte gratuite, protégé par le code d'accès
-async function askOnline(messages, signal) {
-  const r = await fetch('/api/assist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages }), signal });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw Object.assign(new Error(j.error || 'Erreur ' + r.status), { code: r.status === 429 ? 'rate_limited' : 'error' });
-  return j.text;
+// Si tous les services gratuits sont saturés, on attend le délai indiqué et on réessaie (2 fois), au lieu d’afficher une erreur
+export async function askOnline(messages, signal, opts = {}) {
+  for (let tryN = 0; ; tryN++) {
+    const r = await fetch('/api/assist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages, json: !!opts.json }), signal });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { window.__gosetProvider = j.provider || ''; return j.text; }
+    if (r.status === 429 && tryN < 2 && !signal?.aborted) {
+      const sec = Math.max(5, Math.min(90, +j.retryAfter || 30));
+      for (let left = sec; left > 0; left--) {
+        if (signal?.aborted) throw Object.assign(new Error('Arrêté.'), { code: 'cancelled' });
+        window.dispatchEvent(new CustomEvent('goset:aiwait', { detail: left })); await new Promise(ok => setTimeout(ok, 1000));
+      }
+      window.dispatchEvent(new CustomEvent('goset:aiwait', { detail: 0 }));
+      continue;
+    }
+    throw Object.assign(new Error(j.error || 'Erreur ' + r.status), { code: r.status === 429 ? 'rate_limited' : 'error' });
+  }
 }
 // Conversation (assistant) : messages [{ role, content }]
-export async function askAI(messages, signal) {
-  if (X.demo && !(window.claude && window.claude.use)) return askOnline(messages, signal);
+export async function askAI(messages, signal, opts) {
+  if (X.demo && !(window.claude && window.claude.use)) return askOnline(messages, signal, opts);
   const flat = messages.map(m => m.role === 'system' ? m.content : (m.role === 'user' ? 'UTILISATEUR : ' : 'ASSISTANT : ') + m.content).join('\n\n') + '\n\nASSISTANT :';
   return askText(messages.length === 1 ? messages[0].content : flat, signal);
 }

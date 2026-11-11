@@ -10,6 +10,7 @@ import { glyph } from './glyphs.js';
 import { icon } from './icons.js';
 import { FORMATS, fmt, formatOf, isAI , unitWord, isPub } from './formats.js';
 import { renderAIStudio, bindAIStudio } from './aistudio.js';
+import { mountDirector } from './director.js';
 import { award, checkProject, renderProfile, setTitle, setUser, profile } from './badges.js';
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
@@ -78,6 +79,7 @@ const SLATE = `<svg viewBox="0 0 32 32" width="28" height="28"><rect x="3" y="12
 async function route() {
   const h = here();
   if (S.board) { S.board.destroy(); S.board = null; }
+  if (S.director) { S.director.destroy(); S.director = null; }
   if (!S.me) {
     try { S.me = (await api('/api/auth/me')).user; } catch { S.me = null; }
   }
@@ -704,6 +706,7 @@ function epMenu(ev, id) {
     if (a === 'del' && await confirmBox('Supprimer l’épisode ?', `« ${esc(e2.name)} » et son texte seront supprimés. Ses scènes disparaissent du plan de travail.`, 'Supprimer', true)) { p.episodes.splice(i, 1); scheduleSave(); reanalyse(false); renderSeriesHome(); }
   };
 }
+window.addEventListener('goset:aiwait', e => { if (document.querySelector('.dirbar.busy')) return; if (e.detail) toast(tr('Les IA gratuites sont saturées · nouvel essai dans {n} s').replace('{n}', e.detail), 1500); });
 function renderTab() {
   const body = $('#pbody'); const p = S.project, P = S.P;
   body.className = 'pbody tab-' + S.tab;
@@ -715,6 +718,13 @@ function renderTab() {
       editScene: k => openScene(k),
       openAI: o => openAI(o),
       openInk: cb => openInk({ modal, toast, vision: askVision, onAdd: cb })
+    });
+    // Réalisateur IA : barre de commande en bas du canvas
+    S.director = mountDirector(body, {
+      project: () => S.project, P: () => S.P, ep: () => S.ep, lang: () => LANG, board: () => S.board,
+      ask: askAI, parseJSON, provider: () => (window.__gosetProvider || ''),
+      save: scheduleSave,
+      changed: () => { reanalyse(false); if (S.board) { S.board.render(); } }
     });
     return;
   }

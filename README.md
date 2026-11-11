@@ -141,3 +141,16 @@ Société de production, producteur·rice, producteur·rice exécutif·ve, réal
 - **Typographie « affiche de séance »** : titres en Anton (capitales condensées) dans les PDF, les vignettes de dossiers et les titres de rubriques ; texte en IBM Plex Sans Condensed.
 - **Profil** (clic sur votre nom en bas de la barre latérale) : votre métier sur le plateau et votre palmarès.
 - **Distinctions discrètes** (`public/js/badges.js`) : dix jalons réels de préparation (« Nomination à l’Oscar du scénario », « Le plan tient la route », « Dossier envoyé »…), chacun en médaille de verre bronze, argent ou or (claquette, étoile, trophée, bobine…), avec une petite carte quand l’un est atteint, sans points ni classement.
+
+## Réalisateur IA (barre en bas du canvas)
+Écrivez une demande (« fiche de Yasmine », « découpe la scène 3 », « écris la scène suivante », « palette nuit »). L’IA lit tout le projet (scénario, Bible, plans, style, notes du canvas, leçons apprises) et applique directement :
+fiches personnages (Bible + Studio IA), lieux, scénario (ajout ou réécriture), plans par scène avec prompt image et prompt vidéo pour chaque plan (Découpage + Studio IA), notes et palette sur le canvas. Chaque demande s’annule d’un clic. Code : `public/js/director.js`.
+
+### IA gratuite, rapide et fiable
+`api/assist.js` essaie les services dans cet ordre, selon les clés ajoutées dans Vercel → Settings → Environment Variables :
+1. `GROQ_API_KEY` (console.groq.com, gratuit, très rapide) — recommandé
+2. `GEMINI_API_KEY` (aistudio.google.com, gratuit, contexte très long)
+3. `OPENROUTER_API_KEY` (modèles « :free »)
+4. `POLLINATIONS_KEY`
+5. Pollinations sans clé (dernier recours, lent)
+Quand un service est saturé, le suivant prend le relais ; si tous le sont, l’app attend et réessaie toute seule avec un compte à rebours. `GET /api/assist?ping=1` indique les services branchés.
