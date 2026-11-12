@@ -1403,3 +1403,15 @@ html:not([data-theme=dark]) .sm-back{opacity:.28}
 .mb-log .ok{color:#3ecf8e}.mb-log .err{color:#ff8a80}.mb-log .mute{color:var(--mute)}
 @media (max-width:600px){.mgrid{grid-template-columns:1fr 1fr}.mgrid figcaption{font-size:11px}}
 #mbone[hidden]{display:none}
+/* ---------- Pauses de la feuille de service ---------- */
+.pzbar{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(127,127,127,.05)}
+.pz-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-size:13px}
+.pz-row>b{min-width:96px}
+.pz-f{display:inline-flex;align-items:center;gap:6px;color:var(--mute)}
+.pz-f input,.pz-f select{padding:5px 8px;border-radius:8px;font:inherit;font-size:13px}
+.pz-c{display:inline-flex;align-items:center;gap:6px;color:var(--mute)}
+.pz-lab{min-width:180px;flex:1;max-width:280px;padding:6px 9px;border-radius:8px;font:inherit;font-size:13px}
+.pzbar .btn.sm{align-self:flex-start}
+.pzbar .note{margin:0}
+.pz-end{color:var(--mute);font-size:12px;margin-left:6px}
+tr.pause td{background:rgba(94,230,255,.07);font-style:italic}

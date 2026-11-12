@@ -16,7 +16,7 @@ import { award, checkProject, renderProfile, setTitle, setUser, profile } from '
 import { openInvoice } from './invoice.js';
 import { QUOTES } from './quotes.js';
 import { startI18n, LANG, LANGS, LOCALES, setLang, tr } from './i18n.js';
-import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey, offDays } from './parser.js';
+import { setDateLocale, bible as bibleOf, MENTION_CATS, bibKey, offDays, hm, toMin, breaksOf } from './parser.js';
 import { attachMentions, projectItems, caretXY } from './mentions.js';
 import { attachHighlight, termsOf, HL } from './highlight.js';
 import { renderBrief, bindBrief } from './commercial.js';
@@ -830,6 +830,18 @@ function bindProdEvents() {
     const dd = e.target.closest('[data-ddel]'); if (dd) { const [k, id] = dd.dataset.ddel.split('|'); sh[k] = (sh[k] || []).filter(x => x.id !== id); if (!sh[k].length) delete sh[k]; scheduleSave(); reanalyse(false); S.keepScroll = true; return renderTab(); }
     const ds = e.target.closest('[data-dsketch]'); if (ds) { const [k, id] = ds.dataset.dsketch.split('|'); return sketchShot(k, id); }
     const dv = e.target.closest('[data-dview]'); if (dv) { try { localStorage.setItem('sp.decview', dv.dataset.dview); } catch (er) { /* rien */ } S.keepScroll = true; return renderTab(); }
+    const fba = e.target.closest('[data-fbadd]'), fbd = e.target.closest('[data-fbdel]'), fma = e.target.closest('[data-fmeal="auto"]');
+    if (fba || fbd || fma) {
+      const n = (fba || fbd || fma).dataset.fbadd || (fbd || fma)?.dataset.fd, E = S.project.edits;
+      if (fma) delete E['fds.' + n + '.meal.at'];
+      else {
+        let list = breaksOf(E, n);
+        if (fba) list.push({ id: Math.random().toString(36).slice(2, 8), label: '', at: hm(S.P.days[n - 1] ? toMin(E['fds.' + n + '.pat'] || S.project.settings?.pat || '08:00') + 180 : 660).replace('h', ':'), dur: 15 });
+        else list = list.filter(x => x.id !== fbd.dataset.fbdel);
+        if (list.length) E['fds.' + n + '.breaks'] = JSON.stringify(list); else delete E['fds.' + n + '.breaks'];
+      }
+      scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); return;
+    }
     const dai = e.target.closest('[data-dai]'); if (dai) return openAI({ mode: 'dec', sceneKey: dai.dataset.dai || null });
     const mb = e.target.closest('[data-mood]'); if (mb) return openMoodboard({
       P: () => S.P, project: () => S.project, scenes: () => (S.P.series && S.ep ? S.P.scenes.filter(x => x.epId === S.ep) : S.P.scenes),
@@ -876,6 +888,20 @@ function bindProdEvents() {
       scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); toast(tr('Plan de travail recalculé')); return;
     }
     if (e.target.matches('[data-s]') && S.tab === 'pdt') { S.project.settings[e.target.dataset.s] = e.target.value; scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); toast('Plan de travail recalculé'); }
+    // Pauses de la feuille de service
+    const fm = e.target.closest('[data-fmeal]'), fb = e.target.closest('[data-fbk]');
+    if (fm && fm.dataset.fmeal !== 'auto') {
+      const k = 'fds.' + fm.dataset.fd + '.meal.', E = S.project.edits;
+      if (fm.dataset.fmeal === 'off') { if (fm.checked) E[k + 'off'] = '1'; else delete E[k + 'off']; }
+      else if (fm.value === '' && fm.dataset.fmeal === 'at') delete E[k + 'at'];
+      else E[k + fm.dataset.fmeal] = fm.value;
+      scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); toast(tr('Pause recalée, journée recalculée')); return;
+    }
+    if (fb) {
+      const n = fb.dataset.fd, list = breaksOf(S.project.edits, n), b = list.find(x => x.id === fb.dataset.fbk);
+      if (b) { b[fb.dataset.fbf] = fb.dataset.fbf === 'dur' ? +fb.value : fb.value; S.project.edits['fds.' + n + '.breaks'] = JSON.stringify(list); }
+      scheduleSave(); reanalyse(false); S.keepScroll = true; setTimeout(renderTab, 0); toast(tr('Pause recalée, journée recalculée')); return;
+    }
     if (e.target.matches('[data-pat]')) { const k = 'fds.' + e.target.dataset.pat + '.pat'; if (e.target.value) S.project.edits[k] = e.target.value; else delete S.project.edits[k]; scheduleSave(); reanalyse(false); renderTab(); toast('Horaires de la journée recalculés'); }
   });
   body.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.strip[data-scene]')) openScene(e.target.dataset.scene); });

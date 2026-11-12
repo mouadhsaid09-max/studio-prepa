@@ -165,3 +165,6 @@ Remplace l’ancien « Découper avec Moodboard AI ». Bouton « ✦ Moodboard d
 
 ### Images : services gratuits (`api/image.js`)
 Ordre d’essai selon les clés Vercel : `GEMINI_IMAGE_KEY` (Nano Banana, payant, utilise la fiche personnage comme référence) → `CF_ACCOUNT_ID` + `CF_API_TOKEN` (Cloudflare FLUX, gratuit, ~150 images/jour) → `TOGETHER_API_KEY` → `POLLINATIONS_KEY`. Sans clé : Pollinations directement depuis le navigateur. Les images sont rangées dans Vercel Blob (`BLOB_READ_WRITE_TOKEN`, déjà branché : store « goset-images »).
+
+## Pauses de la feuille de service
+Au-dessus de « Séquences du jour » : heure et durée de la pause repas (ou « Pas de pause repas ce jour »), et pauses libres (café, changement de costume…) avec heure et durée. Réglage par défaut pour tout le tournage dans Plan de travail → Réglages du calcul. Les heures tapées dans le tableau font foi : déplacements et pauses se recalent dessus, les lignes restent dans l’ordre de l’horloge, et une pause qui tombe pendant une séquence passe juste après avec la mention « prévue à … ». Le PDF suit.

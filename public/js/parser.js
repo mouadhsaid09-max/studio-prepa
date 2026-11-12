@@ -17,7 +17,7 @@ export const fdate = d => d.toLocaleDateString(DATE_LOCALE, { weekday: 'short', 
 export const fdateL = d => d.toLocaleDateString(DATE_LOCALE, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 export const cls = s => (s.ie === 'INT' ? 'i' : 'e') + (s.night ? 'n' : 'j');
 export function nextMonday() { const d = new Date(); d.setDate(d.getDate() + (((8 - d.getDay()) % 7) || 7)); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-export const DEFAULT_SETTINGS = () => ({ prod: '', real: '', start: nextMonday(), dpw: 5, pat: '08:00', patN: '17:00', hpd: 10, mpp: 75, setup: 30, move: 45, shotMin: 15 });
+export const DEFAULT_SETTINGS = () => ({ prod: '', real: '', start: nextMonday(), dpw: 5, pat: '08:00', patN: '17:00', hpd: 10, mpp: 75, setup: 30, move: 45, shotMin: 15, lunchAt: '', lunchDur: 60 });
 
 const TIMES = ['FIN DE JOURNÉE', 'APRÈS-MIDI', 'CRÉPUSCULE', 'CREPUSCULE', 'CONTINUOUS', 'PLUS TARD', 'CONTINU', 'MATIN', 'NIGHT', 'DUSK', 'DAWN', 'LATER', 'JOUR', 'NUIT', 'SOIR', 'AUBE', 'MIDI', 'SUITE', 'DAY'];
 const TMAP = { DAY: 'JOUR', NIGHT: 'NUIT', DUSK: 'CRÉPUSCULE', CREPUSCULE: 'CRÉPUSCULE', DAWN: 'AUBE', LATER: 'PLUS TARD', CONTINUOUS: 'CONTINU' };
@@ -240,7 +240,7 @@ export const fmtMin = m => { m = Math.round(m); const h = Math.floor(m / 60), r 
 const hm2 = t => { const m = /^(\d{1,2}):(\d{2})/.exec(t || ''); return m ? +m[1] * 60 + +m[2] : null; };
 // Durée de la journée : heures de début et de fin si elles sont réglées, sinon « journée de travail (h) »
 export const dayLength = set => { const a = hm2(set.pat), b = hm2(set.endT); if (a != null && b != null) return ((b - a + 1440) % 1440) || 600; return (+set.hpd || 10) * 60; };
-export const dayCapacity = set => Math.max(60, dayLength(set) - 60); // journée moins la pause repas
+export const dayCapacity = set => Math.max(60, dayLength(set) - (+set.lunchDur >= 0 && set.lunchDur !== '' ? +set.lunchDur : 60)); // journée moins la pause repas
 // Jours de repos chaque semaine (0 = dimanche … 6 = samedi) : réglage « off », sinon ancien réglage « jours / semaine »
 export const offDays = set => { if (Array.isArray(set.off)) return set.off.map(Number); const dpw = +set.dpw || 5; return dpw >= 7 ? [] : dpw == 6 ? [0] : [0, 6]; };
 export const extraOff = set => (Array.isArray(set.extraOff) ? set.extraOff : []).filter(x => x && x.d);
@@ -480,17 +480,49 @@ export const COLS_ALL = [['fig', 'Silhouettes / figuration'], ['acc', 'Accessoir
 // Calcul d'une feuille de service (partagé entre l'écran et l'export PDF)
 export const NEEDS = [['acc', 'Accessoires'], ['cos', 'Costumes'], ['hmc', 'HMC'], ['veh', 'Véhicules'], ['ani', 'Animaux'], ['casc', 'Cascades'], ['sfx', 'SFX / VFX'], ['son', 'Son / musique']];
 export const CREW = [['Régie', -90], ['Mise en scène', -60], ['Image / électro / machino', -60], ['Son', -45], ['HMC / costumes', -90], ['Décoration / accessoires', -75]];
+// « 14h00 », « 14:00 », « 14h », « 9.30 » → minutes depuis minuit
+export const parseT = v => { const m = /^\s*(\d{1,2})\s*[h:.]?\s*(\d{2})?\s*$/i.exec(String(v ?? '')); if (!m || v === '' || v == null) return null; const h = +m[1], mi = +(m[2] || 0); return h < 30 && mi < 60 ? h * 60 + mi : null; };
+export const durL = m => m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '') : m + ' min';
+export const breaksOf = (edits, n) => { try { const a = JSON.parse(edits['fds.' + n + '.breaks'] || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
 export function callSheet(P, project, dayIdx) {
   const set = { ...DEFAULT_SETTINGS(), ...(project.settings || {}) }, edits = project.edits || {};
   const d = P.days[dayIdx], mpe = 540 / P.cap, pat = toMin(edits['fds.' + d.n + '.pat'] || (d.night ? set.patN : set.pat));
-  let t = pat, lunch = false, prev = null; const rows = [], first = {};
+  // Pauses : repas (heure et durée réglables par jour ou pour tout le tournage) + pauses ajoutées à la main
+  const P0 = 'fds.' + d.n + '.', mealDur = Math.max(0, +(edits[P0 + 'meal.dur'] ?? set.lunchDur ?? 60) || 0);
+  const mealAt = parseT(edits[P0 + 'meal.at']) ?? parseT(set.lunchAt) ?? pat + 330;
+  const pending = [];
+  if (edits[P0 + 'meal.off'] !== '1' && mealDur > 0) pending.push({ kind: 'meal', at: mealAt < pat ? mealAt + 1440 : mealAt, dur: mealDur, key: P0 + 'meal.at', label: 'Pause repas (' + durL(mealDur) + ')' });
+  breaksOf(edits, d.n).forEach(b => { const a = parseT(b.at); if (a != null && +b.dur > 0) pending.push({ kind: 'pause', id: b.id, at: a < pat ? a + 1440 : a, dur: +b.dur, label: (b.label || 'Pause') + ' (' + durL(+b.dur) + ')' }); });
+  pending.sort((a, b) => a.at - b.at);
+  let t = pat, prev = null, prevStart = pat; const rows = [], first = {};
+  const place = (b, at) => { const moved = Math.abs(at - b.at) > 10; rows.push({ type: b.kind, at, label: b.label, note: moved ? 'Prévue à ' + hm(b.at) + ', décalée par la séquence en cours' : '', dur: b.dur, key: b.key, id: b.id, moved }); pending.shift(); return at + b.dur; };
   d.sc.forEach(s => {
-    if (prev && s.dk !== prev) { rows.push({ type: 'move', at: t, label: 'Déplacement → ' + s.dk }); t += P.moveMin || 45; }
-    if (!lunch && t - pat >= 330) { rows.push({ type: 'meal', at: t, label: 'Pause repas (1 h)' }); t += 60; lunch = true; }
-    rows.push({ type: 'scene', at: t, s, atL: edits['fds.' + d.n + '.t.' + s.k] || hm(t), key: 'fds.' + d.n + '.t.' + s.k });
-    s.roles.forEach(r => { if (first[r.id] == null) first[r.id] = t; });
-    t += s.est; prev = s.dk;
+    const key = P0 + 't.' + s.k, man0 = parseT(edits[key]), man = man0 != null && man0 >= pat - 180 ? man0 : null;
+    const mv = prev && s.dk !== prev ? (P.moveMin || 45) : 0;
+    if (man != null) {
+      // heure tapée à la main : elle fait foi, la séquence précédente s'est terminée à temps
+      const limit = man - mv;
+      if (t > limit) t = Math.max(prevStart, limit);
+      while (pending.length && pending[0].at < man) { const b = pending[0]; t = place(b, Math.max(t, Math.min(b.at, limit - b.dur))); }
+    } else {
+      // heure calculée : la pause passe avant la séquence si son heure arrive ou si la séquence déborderait dessus
+      while (pending.length) {
+        // l'heure demandée arrive (on attend au plus 30 min pour la respecter), ou la séquence suivante
+        // tomberait dessus et finir avant elle s'en éloignerait plus que de la prendre tout de suite
+        const b = pending[0], end = t + mv + s.est, soon = b.at <= t + 30, over = end > b.at + 20 && b.at - t <= end - b.at;
+        if (!soon && !over) break;
+        t = place(b, soon ? Math.max(t, b.at) : t);
+      }
+    }
+    if (mv) { rows.push({ type: 'move', at: t, label: 'Déplacement → ' + s.dk }); t += mv; }
+    const start = man ?? t;
+    rows.push({ type: 'scene', at: start, s, atL: edits[key] || hm(start), key });
+    s.roles.forEach(r => { if (first[r.id] == null) first[r.id] = start; });
+    t = start + s.est; prev = s.dk; prevStart = start;
   });
+  // pauses pas encore placées : à la suite, si elles tombent encore dans la journée
+  pending.filter(b => b.at < pat + dayLength(set)).slice().forEach(b => { t = place(b, Math.max(t, b.at)); });
+  rows.sort((a, b) => a.at - b.at); // toujours dans l'ordre de l'horloge
   const val = (s, k) => (edits['bd.' + s.k + '.' + k] ?? s.det[k]) || '';
   const hmcMin = r => r.cat === 'Principal' ? 75 : r.cat === 'Secondaire' ? 45 : 30;
   const cast = [...d.roles].sort((a, b) => a.id - b.id).map(r => {

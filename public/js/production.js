@@ -1,5 +1,5 @@
 // Onglets de production : dépouillement, liste artistique, plan de travail, feuilles de service
-import { esc, fmtE, fdate, fdateL, hm, cls, callSheet, CREW, COLS_ALL, bibKey, fmtMin, unavail, isUnavail, DEFAULT_SETTINGS, LIGHT_ORDER, SHOT, shotLabel, offDays, extraOff, isOff, dayLength, dayCapacity } from './parser.js';
+import { esc, fmtE, fdate, fdateL, hm, cls, callSheet, CREW, COLS_ALL, bibKey, fmtMin, unavail, isUnavail, DEFAULT_SETTINGS, LIGHT_ORDER, SHOT, shotLabel, offDays, extraOff, isOff, dayLength, dayCapacity, parseT, breaksOf } from './parser.js';
 
 export const COLS = COLS_ALL;
 export const legend = `<div class="legend"><span><i class="sw ij"></i>INT JOUR</span><span><i class="sw ej"></i>EXT JOUR</span><span><i class="sw in"></i>INT NUIT</span><span><i class="sw en"></i>EXT NUIT</span></div>`;
@@ -85,7 +85,7 @@ function calendarPanel(P, set) {
       <label class="fl">Prêt à tourner (nuit)<input type="time" data-s="patN" value="${esc(set.patN)}"></label>
       <label class="fl">Fin de journée (nuit)<input type="time" data-s="endTN" value="${esc(set.endTN || '')}"></label>
     </div>
-    ${set.endT ? `<p class="note sm">Journée de ${Math.round(dayLength(set) / 6) / 10} h, dont 1 h de repas : ${Math.round(dayCapacity(set) / 6) / 10} h de tournage par jour.</p>` : ''}
+    ${set.endT ? `<p class="note sm">Journée de ${Math.round(dayLength(set) / 6) / 10} h, dont ${(+set.lunchDur || 0) >= 60 ? Math.round((+set.lunchDur) / 6) / 10 + ' h' : (+set.lunchDur || 0) + ' min'} de repas : ${Math.round(dayCapacity(set) / 6) / 10} h de tournage par jour.</p>` : ''}
     <div class="xo"><div class="row between"><b>Jours de repos en plus</b><button class="btn sm ghost" data-xoadd>+ Ajouter</button></div>
       ${xo.length ? xo.map((o, i) => `<div class="xo-r"><input type="date" data-xo="${i}|d" value="${esc(o.d)}"><span>→</span><input type="date" data-xo="${i}|to" value="${esc(o.to || '')}" title="Jusqu’au (facultatif)"><input data-xo="${i}|l" value="${esc(o.l || '')}" placeholder="Fête, voyage, intempéries…"><button class="bx" data-xodel="${i}">✕</button></div>`).join('') : '<p class="note sm">Jours fériés, voyage, repos imprévu : ils sont sautés dans le plan de travail.</p>'}</div>
     ${avail != null ? `<div class="alert ${P.wrapLate ? '' : 'soft ok'}">${P.wrapLate ? `⚠ ${P.days.length} jours de tournage nécessaires mais seulement ${avail} jours disponibles avant la fin prévue (${fdate(new Date(set.end + 'T12:00:00'))}).` : `✓ ${P.days.length} jours nécessaires sur ${avail} jours disponibles avant la fin prévue.`}</div>` : ''}
@@ -110,6 +110,8 @@ export function renderPdt(P, project) {
     <label class="fl">Installation par séquence (min)<input type="number" min="0" max="180" step="5" data-s="setup" value="${esc(set.setup)}"></label>
     <label class="fl">Déplacement entre décors (min)<input type="number" min="0" max="240" step="5" data-s="move" value="${esc(set.move)}"></label>
     <label class="fl">Minutes par plan (si découpage)<input type="number" min="3" max="120" step="1" data-s="shotMin" value="${esc(set.shotMin)}"></label>
+    <label class="fl">Pause repas à (vide = automatique)<input type="time" data-s="lunchAt" value="${esc(set.lunchAt || '')}"></label>
+    <label class="fl">Durée de la pause repas (min)<input type="number" min="0" max="180" step="5" data-s="lunchDur" value="${esc(set.lunchDur ?? 60)}"></label>
   </div><p class="note sm">Temps d’une séquence = installation + pages × minutes par page (ou nombre de plans × minutes par plan si la scène a un découpage), + 45 min si cascade, + 30 min si SFX, véhicule ou animal, + 20 min si figuration, + 15 % la nuit. Une journée compte ${fmtMin(P.cap)} de tournage (journée moins 1 h de repas). Chaque temps se corrige dans la fiche scène.</p></details>
   <p class="note">${P.manual ? '<b>Ordre manuel.</b> ' : '<b>Ordre automatique :</b> EXT jour → INT jour → INT nuit → EXT nuit, séquences d’un même décor regroupées, journées remplies selon le temps estimé. '}Glissez les bandes avec ⠿ pour changer l’ordre, glissez une « fin de journée » pour déplacer la coupure, touchez une bande pour modifier la scène.</p>
   ${conflicts.length ? `<div class="alert">⚠ ${conflicts.join('<br>⚠ ')}</div>` : ''}${over.length ? `<div class="alert soft">Journées trop chargées : ${over.join(', ')} (au-delà de ${fmtMin(P.cap)}).</div>` : ''}
@@ -120,6 +122,28 @@ export function renderPdt(P, project) {
   </tbody></table></div></div>`;
 }
 
+// Réglage des pauses d'une journée : repas (heure, durée, sans repas) + pauses libres (café, changement de costume…)
+const DURS = [15, 20, 30, 45, 60, 75, 90, 120];
+function pauseBar(project, d, set, pat) {
+  const e = project.edits || {}, P0 = 'fds.' + d.n + '.', off = e[P0 + 'meal.off'] === '1';
+  const at = e[P0 + 'meal.at'] ?? '', glob = set.lunchAt || '', dur = +(e[P0 + 'meal.dur'] ?? set.lunchDur ?? 60);
+  const tv = v => { const m = parseT(v); return m == null ? '' : String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+  const opt = (v, cur) => DURS.map(x => `<option value="${x}" ${+cur === x ? 'selected' : ''}>${x >= 60 ? Math.floor(x / 60) + ' h' + (x % 60 ? ' ' + (x % 60) : '') : x + ' min'}</option>`).join('');
+  return `<div class="pzbar">
+    <div class="pz-row"><b>Pause repas</b>
+      <label class="pz-f">${tr('à')} <input type="time" data-fmeal="at" data-fd="${d.n}" value="${tv(at || glob)}" ${off ? 'disabled' : ''} title="${tr('Laisser vide : calculée automatiquement (5 h 30 après le PAT)')}"></label>
+      <label class="pz-f">${tr('durée')} <select data-fmeal="dur" data-fd="${d.n}" ${off ? 'disabled' : ''}>${opt('', dur)}</select></label>
+      <label class="pz-c"><input type="checkbox" data-fmeal="off" data-fd="${d.n}" ${off ? 'checked' : ''}> ${tr('Pas de pause repas ce jour')}</label>
+      ${at ? `<button class="link" data-fmeal="auto" data-fd="${d.n}">${tr('Heure automatique')}</button>` : `<span class="mute sm">${glob ? tr('Heure du tournage') : tr('Heure calculée automatiquement')}</span>`}
+    </div>
+    ${breaksOf(e, d.n).map(b => `<div class="pz-row"><input class="pz-lab" data-fbk="${esc(b.id)}" data-fbf="label" data-fd="${d.n}" value="${esc(b.label || '')}" placeholder="${tr('Pause café, changement de costume…')}">
+      <label class="pz-f">${tr('à')} <input type="time" data-fbk="${esc(b.id)}" data-fbf="at" data-fd="${d.n}" value="${tv(b.at)}"></label>
+      <label class="pz-f">${tr('durée')} <select data-fbk="${esc(b.id)}" data-fbf="dur" data-fd="${d.n}">${opt('', b.dur)}</select></label>
+      <button class="x sm" data-fbdel="${esc(b.id)}" data-fd="${d.n}" title="${tr('Supprimer la pause')}">✕</button></div>`).join('')}
+    <button class="btn sm ghost" data-fbadd="${d.n}">+ ${tr('Ajouter une pause')}</button>
+    <p class="note sm">${tr('Les heures tapées dans le tableau font foi : la suite de la journée et les pauses se recalent dessus.')}</p>
+  </div>`;
+}
 export function renderFds(P, project, dayIdx) {
   if (!P.scenes.length) return empty;
   const ed = makeEd(project);
@@ -145,8 +169,9 @@ export function renderFds(P, project, dayIdx) {
     <div><b>1er assistant</b>${ed('fds.c1er', '', 'span', 'Nom · tél.')}</div>
    </div>
    <h4>Séquences du jour</h4>
+   ${pauseBar(project, d, set, pat)}
    <div class="tw2"><table><thead><tr><th>Heure</th><th>Sc.</th><th>Effet</th><th>Décor</th><th>Résumé</th><th>Rôles</th><th>Pages</th></tr></thead><tbody>
-   ${rows.map(r => r.type === 'scene' ? `<tr>${ed(r.key, r.atL)}<td><button class="scn" data-scene="${esc(r.s.k)}">${esc(r.s.num)}</button></td><td>${r.s.ie} ${esc(r.s.timeL)}</td><td>${esc(r.s.decor)}</td><td>${esc(r.s.summary)}</td><td>${r.s.roles.map(x => x.id).join(', ')}</td><td>${fmtE(r.s.e)}</td></tr>` : `<tr class="${r.type}"><td>${hm(r.at)}</td><td colspan="6">${esc(r.label)}</td></tr>`).join('')}
+   ${rows.map(r => r.type === 'scene' ? `<tr>${ed(r.key, r.atL)}<td><button class="scn" data-scene="${esc(r.s.k)}">${esc(r.s.num)}</button></td><td>${r.s.ie} ${esc(r.s.timeL)}</td><td>${esc(r.s.decor)}</td><td>${esc(r.s.summary)}</td><td>${r.s.roles.map(x => x.id).join(', ')}</td><td>${fmtE(r.s.e)}</td></tr>` : `<tr class="${r.type}"><td>${hm(r.at)}</td><td colspan="6">${esc(r.label)}${r.type !== 'move' ? ` <span class="pz-end">→ ${hm(r.at + r.dur)}</span>` : ''}${r.note ? ` <span class="pz-end">· ${esc(r.note)}</span>` : ''}</td></tr>`).join('')}
    <tr><td colspan="6"><b>Total</b></td><td><b>${fmtE(d.e)}</b></td></tr></tbody></table></div>
    <h4>Comédiens</h4>
    <div class="tw2"><table><thead><tr><th>ID</th><th>Rôle</th><th>Comédien·ne</th><th>Arrivée</th><th>HMC</th><th>Prêt plateau</th><th>Scènes</th></tr></thead><tbody>

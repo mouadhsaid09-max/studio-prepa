@@ -592,7 +592,7 @@ export function buildPdfCore({ PDFDocument, fonts, readImage, lang = 'fr' }, pro
     f.y = Math.max(doc.y, yy + 30) + 12;
     table(f, [
       { h: 'Heure', w: 6, v: r => r.atL || hm(r.at), b: 1 }, { h: 'Sc.', w: 4, v: r => r.s ? r.s.num : '', b: 1 }, { h: 'Effet', w: 9, v: r => r.s ? T(`${r.s.ie} ${r.s.timeL}`) : '', fill: r => r.s ? C[cls(r.s)] : null },
-      { h: 'Décor / étape', w: 22, v: r => r.s ? r.s.decor : r.label }, { h: 'Résumé', w: 37, v: r => r.s ? r.s.summary : '' }, { h: 'Rôles', w: 8, v: r => r.s ? r.s.roles.map(x => x.id).join(', ') : '' }, { h: 'Pages', w: 5, v: r => r.s ? fmtE(r.s.e) : '' }
+      { h: 'Décor / étape', w: 22, v: r => r.s ? r.s.decor : r.label }, { h: 'Résumé', w: 37, v: r => r.s ? r.s.summary : (r.note || '') }, { h: 'Rôles', w: 8, v: r => r.s ? r.s.roles.map(x => x.id).join(', ') : '' }, { h: 'Pages', w: 5, v: r => r.s ? fmtE(r.s.e) : '' }
     ], cs.rows.map(r => r.s ? r : { ...r, _bg: C.soft }), { size: 9 });
     table(f, [
       { h: 'ID', w: 4, v: c => c.r.id, b: 1 }, { h: 'Rôle', w: 16, v: c => c.r.name, b: 1 }, { h: 'Comédien·ne', w: 22, v: c => c.actor || 'À compléter', color: c => c.actor ? C.ink : '#b07a00' },
